@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sandbox — RED EDEN</title>
+<link rel="stylesheet" href="style.css?v=2">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B0806">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+<style>
+#sblayout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:10px;
+  padding:10px;max-width:1400px;margin:0 auto;align-items:start}
+#palette{display:flex;flex-flow:row wrap;gap:6px}
+#palette .tabs{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px}
+.tab{background:var(--slab);color:var(--bone);border:1px solid var(--seam);
+  border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12.5px}
+.tab.on{border-color:var(--amber);color:var(--amber)}
+.el{flex:1 1 150px;display:flex;gap:8px;align-items:center;background:var(--slab);color:var(--bone);
+  border:1px solid var(--seam);border-radius:8px;padding:6px 8px;cursor:pointer;text-align:left}
+.el .sw{width:14px;height:14px;border-radius:4px;flex:none}
+.el b{font-size:12.5px;display:block} .el small{color:var(--ash);font-size:10.5px;display:block}
+.el.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+#stage{display:flex;flex-direction:column;gap:8px;min-width:0}
+#sandbox{width:100%;border:1px solid var(--seam);border-radius:8px;
+  image-rendering:pixelated;background:#000;cursor:crosshair;touch-action:none}
+#inspect{background:var(--slab);border:1px solid var(--seam);border-radius:8px;
+  padding:8px 12px;font-size:12.5px;min-height:56px}
+#inspect b{font-family:monospace}
+#inspect .sci{color:var(--brine)}
+#envbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#envbar button{background:var(--slab);color:var(--bone);border:1px solid var(--seam);
+  border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px}
+#envbar button.on{border-color:var(--amber);color:var(--amber)}
+#envbar button.locked{opacity:.55;cursor:pointer}
+#rp{font-family:monospace;color:var(--amber)}
+#clock{font-family:monospace;font-size:12.5px;color:var(--ash);margin-left:auto}
+#side{background:var(--slab);border:1px solid var(--seam);border-radius:8px;padding:10px}
+#questlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#questlist li{border:1px solid var(--seam);border-radius:6px;padding:7px 9px;font-size:12.5px}
+#questlist li.done{border-color:var(--spore);color:var(--spore)}
+#journal{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#journal li{border:1px solid var(--seam);border-radius:6px;padding:7px 9px;font-size:12.5px}
+#journal li b{color:var(--amber)}
+#jcount{font-family:monospace;font-size:12px;color:var(--ash)}
+#spark{width:100%;border:1px solid var(--seam);border-radius:6px;background:#0a0806}
+#saverow div{margin:4px 0;font-size:12.5px}
+#saverow span{font-family:monospace;color:var(--ash);margin-right:6px}
+#saverow button{background:var(--slab);color:var(--bone);border:1px solid var(--seam);
+  border-radius:6px;padding:3px 10px;cursor:pointer;font-size:12px;margin-right:4px}
+#pfilter{width:100%;box-sizing:border-box;background:var(--slab);color:var(--bone);
+  border:1px solid var(--seam);border-radius:8px;padding:7px 10px;font-size:12.5px;margin-bottom:6px}
+#ticker{min-height:20px;font-size:12px;color:var(--amber);font-family:monospace}
+@media (max-width:1080px){#sblayout{grid-template-columns:minmax(0,1fr)}#side{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">RED<span>/</span>EDEN <em>sandbox</em></a>
+  <nav><a href="index.html">Hub</a><a href="lab.html">Laboratory</a>
+  <a href="../red-garden/index.html">Garden game</a><a href="library.html">Library</a>
+  <a href="sandbox.html" class="on">Sandbox</a></nav>
+</header>
+<main id="sblayout">
+  <section id="stage">
+    <div id="envbar">
+      <button data-world="earth">Earth</button>
+      <button data-world="moon">Moon</button>
+      <button data-world="mars" class="on">Mars</button>
+      <button data-world="europa">Europa</button>
+      <button data-world="hadean">Hadean</button>
+      <span id="clock" class="tick"></span>
+      <button id="btn-pause" title="space">II</button>
+      <button id="btn-step" title="advance one tick while paused">step</button>
+      <button id="btn-speed" title="F">1×</button>
+      <button id="btn-brush-dec" title="shrink pointer [">−</button>
+      <button id="btn-brush" title="grow pointer ]">●●○○</button>
+      <button id="btn-view" title="toggle heat vision">heat</button>
+      <button id="btn-mute" title="toggle sound">sfx on</button>
+    </div>
+    <canvas id="sandbox" width="768" height="480"></canvas>
+    <input id="pfilter" placeholder="filter materials…  (1–8 jump categories)" aria-label="filter materials">
+    <nav id="palette" aria-label="materials"></nav>
+    <div id="ticker"></div>
+    <div id="inspect"><b>Hover the yard</b> — every cell tells you what it is, how hot and wet it is, and why it behaves that way here.</div>
+  </section>
+  <aside id="side">
+    <div id="envblurb" class="ref" style="margin-bottom:8px"></div>
+    <h2 style="font-size:14px">Problems on this world</h2>
+    <ol id="questlist"></ol>
+    <h2 style="font-size:14px;margin-top:10px">Field notes</h2>
+    <div id="notes" class="ref"></div>
+    <h2 style="font-size:14px;margin-top:10px">Research — <span id="rp">0</span> RP · <span id="rank">Undergrad</span></h2>
+    <div id="unlocknext" class="ref"></div>
+    <h2 style="font-size:14px;margin-top:10px">Field journal <span id="jcount"></span></h2>
+    <ol id="journal"></ol>
+    <h2 style="font-size:14px;margin-top:10px">Ecosystem</h2>
+    <div id="eco" class="ref"></div>
+    <h2 style="font-size:14px;margin-top:10px">Populations</h2>
+    <canvas id="spark" width="260" height="56"></canvas>
+    <div class="ref">lime germs · green moss · bright grass</div>
+    <h2 style="font-size:14px;margin-top:10px">Save / load</h2>
+    <div id="saverow">
+      <div><span>Slot 1</span> <button data-sv="1">Save</button> <button data-ld="1">Load</button></div>
+      <div><span>Slot 2</span> <button data-sv="2">Save</button> <button data-ld="2">Load</button></div>
+      <div><span>Slot 3</span> <button data-sv="3">Save</button> <button data-ld="3">Load</button></div>
+      <div><span>Auto</span> <button data-ld="auto">Load</button></div>
+      <div><span>Data</span> <button id="btn-csv" title="download the yard census as CSV">CSV</button> <button id="btn-share" title="copy a share code for this yard">Share</button></div>
+      <div><span>Code</span> <input id="sharecode" placeholder="paste a yard code…" aria-label="yard share code"> <button id="btn-loadcode" title="load the yard in the code box">Load</button></div>
+      <div><span>Weekly</span> <button id="btn-challenge" title="play this world from the shared weekly seed">Challenge</button> <span id="chseed" class="ref"></span></div>
+    </div>
+  </aside>
+</main>
+<div id="startOverlay" class="overlay">
+  <div class="card">
+    <h1>SAND<span>/</span>BOX</h1>
+    <p class="sub">every material reacts to its world</p>
+    <p>Pick a category below the yard — Ground, Fire, Air &amp; boom, Solids, Life,
+    Tech — and paint: clay, gunpowder, cryo, fungus, concrete, helium and more.
+    Then flip worlds and watch the same materials misbehave differently. Finish each
+    world's problems, read the field notes, learn the science by doing.
+    Every reaction you cause logs itself in your field journal.</p>
+    <ol class="ref" style="text-align:left;max-width:60ch;margin:0 auto 12px">
+      <li>Start on Earth: follow the ★ NEXT problem in the Problems panel.</li>
+      <li>Wet beds before planting (sprinkler, or a pool touching the soil) — dry-planted seeds die in seconds.</li>
+      <li>On cold worlds, warm the bed with a heater and plant by day; one gadget per tile, paint order matters.</li>
+    </ol>
+    <button id="btn-start">Start mixing →</button>
+  </div>
+</div>
+<script src="simsandbox.js?v=15"></script>
+<script src="sandbox.js?v=18"></script>
+</body>
+</html>

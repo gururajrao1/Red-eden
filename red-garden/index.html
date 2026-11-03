@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RED GARDEN — a Mars terraforming sandbox</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="topbar">
+  <div id="brand">RED<span>/</span>GARDEN <em>mars sandbox</em></div>
+  <div id="stats" class="mono">
+    <span>sol <b id="st-sol">0</b></span>
+    <span class="ebar"><i id="st-energy"></i><b id="st-energy-n">70</b></span>
+    <span>green <b id="st-green">0%</b></span>
+    <span>germs <b id="st-germs">0</b></span>
+    <span>poison <b id="st-poison">100%</b></span>
+  </div>
+  <div id="topbtns">
+    <button id="btn-speed" title="toggle speed (F)">1×</button>
+    <button id="btn-pause" title="pause (Space)">II</button>
+    <button id="btn-sound" title="sound on/off">♪</button>
+    <button id="btn-restart" title="restart run">↺</button>
+  </div>
+</header>
+<main id="layout">
+  <nav id="toolbar" aria-label="materials"></nav>
+  <section id="stage">
+    <canvas id="game" width="800" height="520"></canvas>
+    <div id="ticker" class="mono"></div>
+  </section>
+  <aside id="side">
+    <div id="tabs" role="tablist">
+      <button id="tab-quests" class="on" role="tab">Problems</button>
+      <button id="tab-codex" class="on2" role="tab">Field guide <b id="codex-n">0/6</b></button>
+    </div>
+    <ol id="quests"></ol>
+    <ol id="codex" hidden></ol>
+  </aside>
+</main>
+<footer id="hint" class="mono">keys 1–6 pick a material · drag to paint · space pauses · finish all 4 problems to win</footer>
+<div id="startOverlay" class="overlay">
+  <div class="card">
+    <h1>RED<span>/</span>GARDEN</h1>
+    <p class="sub">a Mars terraforming sandbox</p>
+    <p>This yard is poisoned, dry and sun-blasted. Paint it with <b>soil</b>,
+    <b>ice</b>, <b>germs</b> and <b>moss</b>, scrub the perchlorate, raise domes —
+    and turn red dirt green. Each problem you solve unlocks a page of real science.</p>
+    <ol id="goalList">
+      <li>Make a puddle — 12 water tiles</li>
+      <li>Wake the germs — 300 living microbes</li>
+      <li>Clean the poison — halve the perchlorate</li>
+      <li>Green Mars — 120 moss tiles</li>
+    </ol>
+    <button id="btn-start">Start planting →</button>
+  </div>
+</div>
+<div id="winOverlay" class="overlay" hidden>
+  <div class="card">
+    <h1>GARDEN<span>/</span>WON</h1>
+    <p class="sub" id="win-sub">Mars is green.</p>
+    <p id="win-stats" class="mono"></p>
+    <button id="btn-again">Play again ↺</button>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

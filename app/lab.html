@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratory — RED EDEN</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">RED<span>/</span>EDEN <em>laboratory</em></a>
+  <nav><a href="index.html">Hub</a><a href="lab.html" class="on">Laboratory</a>
+  <a href="../red-garden/index.html">Garden game</a><a href="library.html">Library</a>
+  <a href="sandbox.html">Sandbox</a></nav>
+</header>
+<main class="wrap">
+  <section class="panel">
+    <h1>Evolution, <span>live.</span></h1>
+    <p class="sub" style="max-width:90ch">A living port of our Python model
+    (<span class="mono">mars_evolution_abm.py</span>): the same mortality law
+    <span class="mono">P = 1 − e^(−S/R)</span>, 28-locus genomes, mutation, gene transfer,
+    and optional life-from-chemistry. Pick a world, press run, watch traits fix.</p>
+    <div id="presets" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 16px">
+      <div><label>Start <select id="in-mode">
+        <option value="seeded">seeded colony</option>
+        <option value="abiogenesis">life from chemistry</option></select></label></div>
+      <div><label>Mutation rate <b class="mono tick" id="v-mu"></b>
+        <input type="range" id="in-mu" min="0" max="0.1" step="0.005" value="0.02"></label></div>
+      <div><label>Gene transfer <b class="mono tick" id="v-hgt"></b>
+        <input type="range" id="in-hgt" min="0" max="0.3" step="0.01" value="0.05"></label></div>
+      <div><label>Sun harshness <b class="mono tick" id="v-uv"></b>
+        <input type="range" id="in-uv" min="0" max="2" step="0.1" value="1"></label></div>
+      <div><label>Poison load <b class="mono tick" id="v-pois"></b>
+        <input type="range" id="in-pois" min="0" max="2" step="0.1" value="1"></label></div>
+      <div><label>Steps <b class="mono tick" id="v-steps"></b>
+        <input type="range" id="in-steps" min="50" max="400" step="10" value="200"></label></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="btn-run">Run evolution →</button>
+      <span class="ref" id="run-state">defaults match the Python paper runs</span>
+    </div>
+  </section>
+  <section class="panel" id="results" style="margin-top:12px" hidden>
+    <h2 id="res-title">Results</h2>
+    <div class="take" id="takes"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+      <div><p class="ref">Who lives where (red = eating, green = sun repair, blue = tough skin)</p>
+        <canvas class="map" id="map-trait" width="48" height="30"></canvas></div>
+      <div><p class="ref">Poison-eaters spreading (brighter red = more digestion)</p>
+        <canvas class="map" id="map-red" width="48" height="30"></canvas></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin:10px 0">
+      <button class="btn ghost" id="btn-play">Replay ▶</button>
+      <input type="range" id="scrub" min="0" max="100" value="100" style="flex:1">
+      <span class="mono tick ref" id="frame-lab"></span>
+    </div>
+    <div id="charts" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+    <h2 style="margin-top:12px">Story of this run</h2>
+    <div id="events"></div>
+    <p class="ref" id="prov"></p>
+  </section>
+</main>
+<script src="sim.js"></script>
+<script src="lab.js"></script>
+</body>
+</html>

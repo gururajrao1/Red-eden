@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Library — the science behind RED EDEN</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">RED<span>/</span>EDEN <em>library</em></a>
+  <nav><a href="index.html">Hub</a><a href="lab.html">Laboratory</a>
+  <a href="../red-garden/index.html">Garden game</a><a href="library.html" class="on">Library</a>
+  <a href="sandbox.html">Sandbox</a></nav>
+</header>
+<main class="wrap">
+  <section class="panel">
+    <h1>What we know, <span>what we guess.</span></h1>
+    <p class="sub" style="max-width:90ch">Every number in the lab and every rule in the game traces to
+    literature below — labelled honestly: <b style="color:var(--spore)">established</b> (multiple lines of
+    evidence), <b style="color:var(--amber)">active research</b> (real papers, open questions),
+    <b style="color:var(--rust)">hypothesis</b> (our model’s bets). Links go only to pages actually
+    retrieved; classics are cited by author/year/venue.</p>
+  </section>
+  <section class="panel" style="margin-top:12px">
+    <h2>The agent's reading queue</h2>
+    <p class="sub" style="max-width:90ch">No live AI lives inside these pages — the stories are written
+    by the project's reader agent (the assistant that built this app) from the cited papers, and voted
+    requests get written first. 📖 marks papers with a finished story.</p>
+    <div id="queue"></div>
+  </section>
+  <div id="lib"></div>
+  <section class="panel" style="margin-top:12px">
+    <h2>Honest limits</h2>
+    <p class="sub" style="max-width:90ch">No entry here claims Mars has or had life. Lab time-compression
+    (chemistry in minutes) and single-trait genomes are conveniences, not claims. The models show what
+    life <em>would have to do</em> — survival, detox, sheltering, emergence — under measured Martian chemistry.</p>
+  </section>
+</main>
+<script src="papers.js"></script>
+<script src="chapters.js"></script>
+<script>
+const lib = document.getElementById('lib');
+function votes() {
+  try { return JSON.parse(localStorage.getItem('reden_story_votes') || '{}'); } catch (e) { return {}; }
+}
+let VOTES = votes();
+function vote(title, btn) {
+  VOTES[title] = (VOTES[title] || 0) + 1;
+  try { localStorage.setItem('reden_story_votes', JSON.stringify(VOTES)); } catch (e) {}
+  btn.textContent = '📩 story requested (' + VOTES[title] + ') — the agent reads top votes first';
+  renderQueue();
+}
+function renderQueue() {
+  const top = Object.entries(VOTES).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  document.getElementById('queue').innerHTML = top.length
+    ? top.map(([t, n]) => '<p class="sub">· ' + t + ' — ' + n + ' vote' + (n > 1 ? 's' : '') + '</p>').join('')
+    : '<p class="sub">No requests yet — tap 📩 under any paper to order its story.</p>';
+}
+SECTIONS.forEach(sec => {
+  const s = document.createElement('section');
+  s.className = 'panel'; s.style.marginTop = '12px';
+  const col = { established: 'var(--spore)', active: 'var(--amber)', hypothesis: 'var(--rust)' };
+  s.innerHTML = '<h2>' + sec.title + '</h2><p class="sub">' + sec.intro + '</p>' +
+    PAPERS.filter(p => p.sec === sec.id).map(p =>
+      '<div class="paper"><h4>' + p.title +
+      ' <span class="ref" style="color:' + (col[p.level] || 'var(--ash)') + '">● ' + p.level + '</span></h4>' +
+      '<p><em>' + p.cite + '.</em> ' + p.finding + '</p>' +
+      '<p class="try">Try it → ' + p.try + '</p>' +
+      (p.story && CHAPTERS[p.story]
+        ? '<p><a href="story.html?c=' + p.story + '">📖 ' + CHAPTERS[p.story].title + ' — a ' + CHAPTERS[p.story].pages.length + '-page story (' + CHAPTERS[p.story].minutes + ' min) →</a></p>'
+        : '<p class="ref"><button data-vote="' + p.title.replace(/"/g, '') + '">📩 want the story version</button></p>') +
+      (p.url ? '<p class="ref"><a href="' + p.url + '" target="_blank" rel="noopener">read the source ↗</a></p>' : '') +
+      '</div>').join('');
+  lib.appendChild(s);
+});
+document.querySelectorAll('[data-vote]').forEach(b => {
+  const t = b.getAttribute('data-vote');
+  if (VOTES[t]) b.textContent = '📩 story requested (' + VOTES[t] + ') — the agent reads top votes first';
+  b.onclick = () => vote(t, b);
+});
+renderQueue();
+</script>
+</body>
+</html>

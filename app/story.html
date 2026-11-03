@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story — RED EDEN library</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.story-body p{max-width:78ch;line-height:1.65;margin:10px 0}
+.story-body .kick{color:var(--amber);font-style:italic}
+.pager{display:flex;gap:8px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.pager button{background:var(--slab);color:var(--bone);border:1px solid var(--seam);padding:6px 14px;cursor:pointer}
+.pager button:disabled{opacity:.35;cursor:default}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--seam);display:inline-block;margin-right:5px}
+.dot.on{background:var(--amber)}
+.badge{display:inline-block;border:1px solid var(--spore);color:var(--spore);padding:2px 10px;margin-bottom:8px}
+.exp li{margin:6px 0;max-width:80ch}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="index.html">RED<span>/</span>EDEN <em>stories</em></a>
+  <nav><a href="index.html">Hub</a><a href="lab.html">Laboratory</a>
+  <a href="../red-garden/index.html">Garden game</a><a href="library.html">Library</a>
+  <a href="sandbox.html">Sandbox</a></nav>
+</header>
+<main class="wrap">
+  <section class="panel">
+    <span class="badge">AI SUMMARY · <span id="mins"></span> min read</span>
+    <h1 id="title"></h1>
+    <p class="sub" id="sub" style="max-width:90ch"></p>
+    <p class="ref" id="cite"></p>
+  </section>
+  <section class="panel story-body" style="margin-top:12px">
+    <h2 id="ph"></h2>
+    <p class="kick" id="kick"></p>
+    <div id="paras"></div>
+    <div class="pager">
+      <button id="prev">← Prev</button>
+      <span class="ref" id="count"></span>
+      <span id="dots"></span>
+      <button id="next">Next →</button>
+    </div>
+  </section>
+  <section class="panel exp" style="margin-top:12px">
+    <h2>Replay it in the sandbox</h2>
+    <ol id="steps"></ol>
+    <p><a href="sandbox.html">Open the sandbox →</a></p>
+  </section>
+  <section class="panel" style="margin-top:12px">
+    <h2>How this story was made</h2>
+    <p class="sub" style="max-width:90ch">Written by the project's AI reader (that's me — the same
+    assistant that built this app) from the papers linked below. Numbers and chemistry come from
+    the papers; scenes and dialogue are imagined. Status: <b id="lvl"></b>.</p>
+    <p class="ref" id="src"></p>
+    <p class="ref" id="dram"></p>
+    <p><a href="library.html">← Back to the library</a></p>
+  </section>
+</main>
+<script src="chapters.js"></script>
+<script>
+const key = new URLSearchParams(location.search).get('c');
+const ch = CHAPTERS[key];
+if (!ch) { document.querySelector('main').innerHTML = '<section class="panel"><h1>No such story yet.</h1><p><a href="library.html">Back to the library →</a></p></section>'; }
+else {
+  let i = 0;
+  document.getElementById('mins').textContent = ch.minutes;
+  document.getElementById('title').textContent = ch.title;
+  document.getElementById('sub').textContent = ch.sub;
+  document.getElementById('cite').textContent = ch.paper + (ch.also ? ' · Also: ' + ch.also : '');
+  document.getElementById('lvl').textContent = ch.level;
+  document.getElementById('src').innerHTML = ch.sources.map(u => '<a href="' + u + '" target="_blank" rel="noopener">' + u + '</a>').join('<br>');
+  document.getElementById('dram').textContent = 'Imagined parts: ' + ch.dramatized;
+  document.getElementById('steps').innerHTML = ch.experiment.steps.map(s => '<li>' + s + '</li>').join('');
+  const dots = document.getElementById('dots');
+  dots.innerHTML = ch.pages.map(() => '<span class="dot"></span>').join('');
+  function show(n) {
+    i = Math.max(0, Math.min(ch.pages.length - 1, n));
+    const p = ch.pages[i];
+    document.getElementById('ph').textContent = p.h;
+    document.getElementById('kick').textContent = p.kick;
+    document.getElementById('paras').innerHTML = p.paras.map(t => '<p>' + t + '</p>').join('');
+    document.getElementById('count').textContent = 'Page ' + (i + 1) + ' of ' + ch.pages.length;
+    [...dots.children].forEach((d, k) => d.className = 'dot' + (k === i ? ' on' : ''));
+    document.getElementById('prev').disabled = i === 0;
+    document.getElementById('next').disabled = i === ch.pages.length - 1;
+  }
+  document.getElementById('prev').onclick = () => show(i - 1);
+  document.getElementById('next').onclick = () => show(i + 1);
+  show(0);
+}
+</script>
+</body>
+</html>

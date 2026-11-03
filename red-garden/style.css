@@ -1,0 +1,69 @@
+:root{
+  --basalt:#0B0806; --slab:#14100B; --seam:#2A1E14;
+  --bone:#EDE4D8; --ash:#A89880; --amber:#FFB000;
+  --rust:#FF4D2E; --brine:#2DD4BF; --spore:#A3E635;
+}
+*{box-sizing:border-box}
+body{background:var(--basalt);color:var(--bone);
+  font-family:system-ui,"Segoe UI",sans-serif;margin:0}
+.mono,.tk{font-family:"JetBrains Mono",ui-monospace,monospace}
+#topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:8px 14px;border-bottom:1px solid var(--seam);
+  position:sticky;top:0;background:#0B0806f2;z-index:5}
+#brand{font-family:"JetBrains Mono",monospace;font-weight:800;font-size:18px}
+#brand span{color:var(--amber)} #brand em{color:var(--ash);font-size:12px;font-style:normal}
+#stats{display:flex;gap:14px;font-size:13px;color:var(--ash);align-items:center}
+#stats b{color:var(--bone);font-variant-numeric:tabular-nums}
+.ebar{position:relative;display:inline-block;width:130px;height:16px;
+  border:1px solid var(--seam);border-radius:99px;overflow:hidden;background:#000}
+.ebar i{position:absolute;inset:1px;background:var(--amber);width:70%;border-radius:99px}
+.ebar b{position:absolute;inset:0;text-align:center;font-size:11px;line-height:16px;color:#000}
+#topbtns{margin-left:auto;display:flex;gap:6px}
+#topbtns button{background:var(--slab);color:var(--bone);border:1px solid var(--seam);
+  border-radius:6px;padding:4px 10px;cursor:pointer;font-family:monospace}
+#topbtns button:hover{border-color:var(--amber)}
+#layout{display:grid;grid-template-columns:172px minmax(0,1fr) 300px;gap:10px;
+  padding:10px;max-width:1400px;margin:0 auto;align-items:start}
+#toolbar{display:flex;flex-direction:column;gap:8px}
+.tool{background:var(--slab);border:1px solid var(--seam);border-radius:8px;
+  padding:8px;color:var(--bone);cursor:pointer;text-align:left}
+.tool .swatch{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px}
+.tool b{font-size:13px} .tool small{display:block;color:var(--ash);font-size:11px;margin-top:2px}
+.tool .key{float:right;color:var(--ash);border:1px solid var(--seam);
+  border-radius:4px;padding:0 5px;font-size:11px;font-family:monospace}
+.tool.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.tool.cant{opacity:.45}
+#stage{display:flex;flex-direction:column;gap:8px;min-width:0}
+#game{width:100%;border:1px solid var(--seam);border-radius:8px;
+  image-rendering:pixelated;background:#1a0f0a;cursor:crosshair}
+#ticker{min-height:22px;font-size:12px;color:var(--amber)}
+#side{background:var(--slab);border:1px solid var(--seam);border-radius:8px;padding:10px}
+#tabs{display:flex;gap:6px;margin-bottom:8px}
+#tabs button{flex:1;background:transparent;color:var(--ash);border:1px solid var(--seam);
+  border-radius:6px;padding:5px;cursor:pointer;font-size:12px}
+#tabs button.on{background:var(--seam);color:var(--bone)}
+#quests,#codex{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#quests li{border:1px solid var(--seam);border-radius:6px;padding:7px 9px;font-size:12.5px}
+#quests li.done{border-color:var(--spore);color:var(--spore)}
+#quests li.active{border-color:var(--amber)}
+#quests .prog{color:var(--ash);font-family:monospace;font-size:11px}
+#codex li{border-left:2px solid var(--seam);padding:4px 0 4px 10px;font-size:12.5px}
+#codex li.open{border-color:var(--brine)}
+#codex li.locked{opacity:.4}
+#codex h4{margin:0 0 3px;font-size:12.5px}
+#codex p{margin:0;color:var(--ash);line-height:1.45}
+#hint{padding:8px 14px 16px;color:var(--ash);font-size:11.5px;text-align:center}
+.overlay{position:fixed;inset:0;background:#000a;display:flex;
+  align-items:center;justify-content:center;z-index:20}
+.overlay[hidden]{display:none}
+.card{background:var(--slab);border:1px solid var(--seam);border-radius:12px;
+  max-width:520px;padding:28px;margin:16px}
+.card h1{font-family:monospace;margin:0;font-size:34px}
+.card h1 span{color:var(--amber)}
+.card .sub{color:var(--ash);margin:2px 0 12px}
+.card p{line-height:1.55;font-size:14px}
+.card ol{font-size:13.5px;line-height:1.7;color:var(--bone)}
+.card button{background:var(--amber);color:#000;border:0;border-radius:8px;
+  font-size:15px;font-weight:700;padding:10px 22px;cursor:pointer;margin-top:10px}
+@media (max-width:1080px){#layout{grid-template-columns:150px minmax(0,1fr)}#side{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
