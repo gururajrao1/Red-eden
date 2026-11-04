@@ -107,6 +107,8 @@ const WORLDS = {
           uv: 0.05, blurb: 'Orange haze, methane seas, -180° ice bedrock. Thick air, no oxygen, almost no seasons.' },
   io: { name: 'Io', g: 0.18, o2: 0, dayT: -100, nightT: -140, cycle: 80,
           uv: 0.5, blurb: 'Tidal foundry: Jupiter kneads the crust into endless lava lakes under sulfur frost.' },
+  archaean: { name: 'Archaean', g: 1.0, o2: 0, dayT: 30, nightT: 10, cycle: 60, uv: 0.3,
+          blurb: 'Young Earth: warm shallow seas, methane haze, no oxygen and no ozone. The GOE happens here first.' },
   venus: { name: 'Venus', g: 0.9, o2: 0, dayT: 460, nightT: 440, cycle: 120,
           uv: 0.3, blurb: 'Runaway greenhouse: 460° basalt plains, sulfur skies, volcanic glass. A kiln with weather.' },
 };
@@ -135,7 +137,7 @@ function blob(rng, arr, W, H, cx, cy, rad, val) {
 function createWorld(worldId, seed) {
   const Wd = WORLDS[worldId] || WORLDS.earth;
   const rng = mulberry32(seed || 1);
-  const w = { id: worldId, Wd, rng, sol: 0, reducer: 0.1, o2: Wd.o2 ? 100 : 0, o2loud: false, uClean: 0,
+  const w = { id: worldId, Wd, rng, sol: 0, reducer: 0.1, o2: Wd.o2 ? 100 : 0, o2loud: false, uClean: 0, erupt: 0,
     el: new Uint8Array(GN), life: new Uint8Array(GN), lifeAmt: new Float32Array(GN),
     tech: new Uint8Array(GN), wet: new Float32Array(GN), age: new Float32Array(GN), heat: new Float32Array(GN), hist: [], rot: 0,
     pt: new Float32Array(GN),
@@ -189,6 +191,14 @@ function createWorld(worldId, seed) {
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SULFUR);
     for (let k = 0; k < 3; k++)
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SAND);
+  } else if (worldId === 'archaean') {
+    // young Earth: warm shallow seas on basalt, sandbars, a couple of alkaline vents
+    for (let k = 0; k < 4; k++)
+      blob(rng, w.el, GW, GH, 8 + ((rng() * (GW - 16)) | 0), 14 + ((rng() * (GH - 20)) | 0), 4, E.WATER);
+    for (let k = 0; k < 4; k++)
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SAND);
+    for (let k = 0; k < 2; k++)
+      blob(rng, w.el, GW, GH, 14 + ((rng() * (GW - 28)) | 0), 16 + ((rng() * (GH - 24)) | 0), 1, E.VENT);
   } else {
     for (let k = 0; k < 5; k++)
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SALT);
@@ -1018,6 +1028,9 @@ function stepWorld(w) {
         w.wet[i] = 0; w.ev.push(['cool', x, y]);
       }
       if (w.life[i]) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['scorch', x, y]); }
+    }
+    else if (e === E.BASALT && w.id === 'io' && hasNbr(x, y, n => n === E.LAVA) && R() < 0.002) {
+      w.el[i] = E.LAVA; w.erupt++; w.ev.push(['burst', x, y]); // tidal flexing cracks the crust open
     }
     else if (e === E.VENT) {
       // alkaline vent, Lost-City style (40-90°C waters): warms its whole neighbourhood toward
@@ -2012,6 +2025,14 @@ const QUESTS = [
     done: (w, c) => c.sulfur >= 140, guide: 'Io rains sulfur frost: gather the fields and paint your own drifts. The foundry pays in yellow.' },
   { id: 'I2', world: 'io', name: 'Living lake', goal: 'keep 100 lava liquid',
     done: (w, c) => c.lava >= 100, guide: 'Pour fresh lava over the lakes: crust wins unless you feed them. Tidal heat does the rest.' },
+  { id: 'A1', world: 'archaean', name: 'First mats', goal: 'grow 4 stromatolites',
+    done: (w, c) => c.strom >= 4, guide: 'Warm shallow seas, no heaters needed: cyano first and spread, then mats beside the builders. Reef follows.' },
+  { id: 'A2', world: 'archaean', name: 'The oxidation', goal: 'breathe out 15 free oxygen',
+    done: (w) => w.o2 >= 15, guide: 'The GOE where it happened: a big cyano pool under a methane haze. No heaters, no dome — just time and daylight.' },
+  { id: 'I3', world: 'io', name: 'Tidal pulse', goal: 'witness 10 eruptions',
+    done: (w) => w.erupt >= 10, guide: 'Jupiter kneads the crust: basalt near lava cracks open on its own. Tend a lake and count the bursts.' },
+  { id: 'I4', world: 'io', name: "Pele's ring", goal: 'hold 130 lava',
+    done: (w, c) => c.lava >= 130, guide: 'Pour fresh lava and let the tides help: eruptions feed the lakes while crust steals the edges.' },
   { id: 'H7', world: 'hadean', name: 'Diamond core', goal: 'press 3 diamonds at a vent',
     done: (w, c) => c.diamond >= 3, guide: 'Coal against a lava vent: Hadean heat does the pressing. Mind the quench steam.' },
 ];

@@ -100,5 +100,16 @@ const countLife = (w, id) => { let n = 0; for (let i = 0; i < w.life.length; i++
   step(w, 15);
   ok('spiders spare bees, starve without prey', countLife(w, LIFE.BEE) > 0, `bees=${countLife(w, LIFE.BEE)}`);
 }
+// 8. tidal flexing erupts only on Io, and feeds the lakes
+{
+  const w = S.createWorld('io', 910);
+  S.paint(w, 'base', E.LAVA, 32, 25, 2);
+  step(w, 60);
+  const ioErupt = w.erupt;
+  const v = S.createWorld('hadean', 911); // same lava, no tides
+  S.paint(v, 'base', E.LAVA, 32, 25, 2);
+  step(v, 60);
+  ok('eruptions are Io-only', ioErupt > 0 && v.erupt === 0, `io=${ioErupt} hadean=${v.erupt}`);
+}
 console.log(fail ? `\n${fail} SIM7 FAILURES (${pass} passed)` : `\nALL ${pass} SIM7 PASSED`);
 process.exit(fail ? 1 : 0);

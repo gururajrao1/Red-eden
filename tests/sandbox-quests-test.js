@@ -515,5 +515,39 @@ const done = (w, id) => S.QUESTS.find(q => q.id === id).done(w, w.counts);
   step(w, 30);
   ok('I2 Living lake completes', done(w, 'I2'), 'lava=' + countEl(w, E.LAVA));
 }
+// A1 First mats: warm young seas, cyano spread first, then mats
+{
+  const w = S.createWorld('archaean', 829);
+  S.paint(w, 'base', E.WATER, 32, 25, 3);
+  w.sol = 8;
+  S.paint(w, 'life', LIFE.CYANO, 32, 25, 2);
+  step(w, 10);
+  S.paint(w, 'life', LIFE.STROM, 32, 25, 1);
+  step(w, 60);
+  ok('A1 First mats completes', done(w, 'A1'), 'strom=' + countLife(w, LIFE.STROM));
+}
+// A2 The oxidation: the GOE where it happened, no heaters required
+{
+  const w = S.createWorld('archaean', 830);
+  S.paint(w, 'base', E.WATER, 32, 25, 4);
+  w.sol = 8;
+  S.paint(w, 'life', LIFE.CYANO, 32, 25, 3);
+  step(w, 150);
+  ok('A2 The oxidation completes', done(w, 'A2'), 'o2=' + w.o2.toFixed(1));
+}
+// I3 Tidal pulse: basalt cracks open near tended lakes
+{
+  const w = S.createWorld('io', 831);
+  S.paint(w, 'base', E.LAVA, 32, 25, 2);
+  step(w, 100);
+  ok('I3 Tidal pulse completes', done(w, 'I3'), 'erupt=' + w.erupt);
+}
+// I4 Pele's ring: pour big, let the tides help
+{
+  const w = S.createWorld('io', 832);
+  S.paint(w, 'base', E.LAVA, 32, 25, 5);
+  step(w, 40);
+  ok("I4 Pele's ring completes", done(w, 'I4'), 'lava=' + countEl(w, E.LAVA));
+}
 console.log(fail ? `\n${fail} QUEST FAILURES (${pass} passed)` : `\nALL ${pass} QUESTS COMPLETABLE`);
 process.exit(fail ? 1 : 0);

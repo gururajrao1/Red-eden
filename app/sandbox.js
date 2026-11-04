@@ -155,6 +155,7 @@ const TINT = { // world-tinted ground
   titan: { 1: '#8a7a5a', 3: '#c8a050' },
   venus: { 1: '#7a5a40', 3: '#a87848' },
   io: { 1: '#6a5a4a', 3: '#a88a3a' },
+  archaean: { 1: '#5a6a4a', 3: '#7aa86a' },
 };
 const ENV_BLURB = {
   earth: 'EARTH — the control. O₂ air, mild sun, stable water. Learn the tools here. (Problems: Meadow, Acid spill, Kiln, Compost, Swarm, Quicklime, Straw guardian, Reef, Web of life, Fish pond, Gilded copies, Flower bed, Shale oil, Honey harvest, Guano island, Clover rotation, Spider guard, Stromatolite reef, Soda flat.)',
@@ -164,7 +165,8 @@ const ENV_BLURB = {
   hadean: 'HADEAN EARTH — lava vents, sulfur skies, no oxygen. Brew acid, garden heat. (Problems: Acid pond, Hot garden, Glass shore, Shade garden, Primordial soup, Genesis, Diamond core, Hot-spring seed.)',
   titan: 'TITAN — orange haze, methane seas (oil stands in for liquid methane), −180° ice bedrock. Fire snuffs; hothouses or nothing lives. (Problems: Oasis, Hothouse, Sun glass, Nuggets.)',
   venus: 'VENUS — 460° basalt plains, sulfur frost, lava fields. Water boils, life is impossible; the planet is a kiln. (Problems: Volcanic glass, Marble works, Diamond forge, Steel works.)',
-  io: 'IO — tidal foundry: Jupiter kneads the crust into lava lakes under sulfur frost, −100° days. Resurface or freeze. (Problems: Sulfur snow, Living lake.)',
+  io: 'IO — tidal foundry: Jupiter kneads the crust into lava lakes under sulfur frost, −100° days. Resurface or freeze. (Problems: Sulfur snow, Living lake, Tidal pulse, Pele’s ring.)',
+  archaean: 'ARCHAEAN — young Earth: warm shallow seas, methane haze, no oxygen, no ozone. Stromatolites reef while the air is still poison-free. (Problems: First mats, The oxidation.)',
 };
 // progression: research points buy ranks; ranks unlock worlds. Materials stay free forever.
 const QUEST_RP = { E1: 100, E2: 100, M1: 100, M2: 100, R1: 100, R2: 100,
@@ -175,10 +177,10 @@ const QUEST_RP = { E1: 100, E2: 100, M1: 100, M2: 100, R1: 100, R2: 100,
   T1: 150, T2: 150, T3: 150, T4: 150, V1: 150, V2: 150, V3: 250, V4: 150,
   E10: 150, E11: 150, E12: 150, E13: 150, H7: 250,
   E14: 150, E15: 150, E16: 150, E17: 150, E19: 150, E20: 150, U5: 150, H8: 150,
-  R5: 250, R6: 150, R7: 150, M5: 150, I1: 150, I2: 150 };
+  R5: 250, R6: 150, R7: 150, M5: 150, I1: 150, I2: 150, A1: 150, A2: 250, I3: 150, I4: 150 };
 const RANKS = [{ rp: 0, name: 'Undergrad' }, { rp: 400, name: 'Grad student' },
   { rp: 1000, name: 'Principal investigator' }, { rp: 1600, name: 'Mission director' }];
-const UNLOCK_RP = { europa: 400, titan: 700, io: 900, hadean: 1000, venus: 1200 };
+const UNLOCK_RP = { europa: 400, archaean: 500, titan: 700, io: 900, hadean: 1000, venus: 1200 };
 function getRP() {
   try { return +(localStorage.getItem('sandbox_rp_total') || 0); } catch (e) { return 0; }
 }
@@ -1037,6 +1039,10 @@ const PROG = { // live progress per problem; defensive: counts may not exist yet
   M5: (w) => `sol ${w.sol}/90+ tardi ${w.counts.tardi || 0}`,
   I1: (w, c) => `${c.sulfur || 0}/140 sulfur`,
   I2: (w, c) => `${c.lava || 0}/100 lava`,
+  A1: (w, c) => `${c.strom || 0}/4 strom`,
+  A2: (w) => `${(w.o2 || 0).toFixed(1)}/15 O2`,
+  I3: (w) => `${w.erupt || 0}/10 eruptions`,
+  I4: (w, c) => `${c.lava || 0}/130 lava`,
   E9: (w, c) => `H ${(c.ecoH || 0).toFixed(2)}/1.40`,
   H5: (w, c) => `${c.water || 0}/70 water + vent`,
   H6: (w, c) => `${c.germs || 0}/100 germs`,
@@ -1238,7 +1244,7 @@ function showTool(p) {
 function packWorld(w) {
   return { id: w.id, sol: w.sol, reducer: w.reducer, quests: w.quests, rot: w.rot | 0,
     m1done: !!w.m1done, m2done: !!w.m2done, dawnWin: w.dawnWin | 0, wasNight: !!w.wasNight,
-    o2: w.o2 || 0, o2loud: !!w.o2loud, uClean: w.uClean | 0,
+    o2: w.o2 || 0, o2loud: !!w.o2loud, uClean: w.uClean | 0, erupt: w.erupt | 0,
     hist: (w.hist || []).slice(-300),
     el: Array.from(w.el), life: Array.from(w.life), lifeAmt: Array.from(w.lifeAmt),
     tech: Array.from(w.tech), wet: Array.from(w.wet), pt: Array.from(w.pt) };
@@ -1246,7 +1252,7 @@ function packWorld(w) {
 function unpackWorld(pack) {
   const w = createWorld(pack.id, 1);
   w.sol = pack.sol | 0; w.reducer = pack.reducer || 0;
-  w.o2 = (pack.o2 != null ? pack.o2 : (w.Wd.o2 ? 100 : 0)); w.o2loud = !!pack.o2loud; w.uClean = pack.uClean | 0;
+  w.o2 = (pack.o2 != null ? pack.o2 : (w.Wd.o2 ? 100 : 0)); w.o2loud = !!pack.o2loud; w.uClean = pack.uClean | 0; w.erupt = pack.erupt | 0;
   w.quests = pack.quests || {}; w.rot = pack.rot | 0;
   w.m1done = !!pack.m1done; w.m2done = !!pack.m2done;
   w.dawnWin = pack.dawnWin | 0; w.wasNight = pack.wasNight !== false;

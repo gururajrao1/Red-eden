@@ -144,4 +144,102 @@ const CHAPTERS = {
     'https://science.nasa.gov/mission/dragonfly/'],
   dramatized: 'The “virga report” framing and “tribute” metaphor are imagined. Atmospheric pressure (1.5 bar), Huygens descent time and cobble photographs, Kraken Mare’s scale, dune composition, tholin chemistry, and Dragonfly’s planned mid-2030s arrival are from the cited sources.'
 },
+'venus-furnace': {
+  title: 'The Twin That Boiled',
+  sub: 'Venus may have held oceans for billions of years — from the Venera landings and climate modelling.',
+  minutes: 11,
+  paper: 'Venera 9-14 + VEGA, USSR, 1975-1985 — surface photography under 92 bar',
+  also: 'Way & Del Genio and successors — a temperate early Venus, then runaway',
+  level: 'established science',
+  pages: [
+    { h: 'The morning star lies',
+      kick: 'Same size as Earth, spinning backwards.',
+      paras: [
+      'Venus is almost Earth’s twin in mass and size, wrapped in clouds so bright they cast shadows on a moonless night. For centuries astronomers drew jungles under those clouds. The clouds turned out to be concentrated sulfuric acid riding hundred-metre-per-second winds, and the surface had never been seen by any telescope at all.',
+      'The Soviet Venera programme went to look in person. One probe after another dropped through the acid decks through the 1970s, most dying on the way down. Then Venera 9 landed in 1975 and switched on its camera: cracked basalt plains under an orange sky, pebbles with edges too sharp for any river. Then, like every lander after it, it started dying.',
+      'The numbers on the telemetry were the shock. Around 460 degrees at the surface — hotter than a pizza oven, day and night, poles and equator. Pressure like a kilometre under the sea. Nothing built for Earth survives there; the longest-lived lander, Venera 13, managed just over two hours.'] },
+    { h: 'An hour on the surface',
+      kick: 'Two hours to photograph eternity.',
+      paras: [
+      'Imagine the landing ellipse as a work shift. The parachute melts away in the heat and the lander free-falls the last stretch, thumping into basalt. Cameras pan, drills bite, spectrometers sniff: rock like Earth’s ocean floor, air that is nearly all carbon dioxide, light filtered orange through the acid haze. Then seals soften, circuits drift, and the signal thins into noise.',
+      'Every Venus surface fact we own was bought inside one of those shifts. The rocks, the temperature, the crushing pressure, the yellowish sky — all of it comes from a handful of Soviet panoramas and a few hours of chemistry. No rover has ever driven there. No sample has ever come home.',
+      'The sandbox honours the hostility honestly: the Venus world runs at the true 460-degree ambient, water boils on contact, and life is simply impossible. It is the only world in the game with no biology quests at all — a kiln with weather.'] },
+    { h: 'The ocean that left',
+      kick: 'Venus may have been blue for billions of years.',
+      paras: [
+      'Here is the twist the models insist on. Venus gets nearly twice Earth’s sunlight, but a young, fast-spinning Venus with an ocean may have grown a permanent dayside cloud shield — a parasol that kept the surface temperate. Simulations hold those oceans for billions of years: a second blue marble, possibly longer-lived than our own.',
+      'The evidence for the lost ocean is written in hydrogen. Venus’s air holds far more deuterium than ordinary hydrogen, and the light kind escapes to space first — so the ratio is a gauge of water lost. By that gauge, Venus has bled at least an ocean’s worth of hydrogen, maybe much more.',
+      'When the water went, the thermostat broke. Without oceans to dissolve it, carbon dioxide piled up from volcanoes until the air itself weighed 92 atmospheres and trapped every photon twice over. That is the runaway greenhouse: not a warmer Earth, but a different planet wearing Earth’s clothes.'] },
+    { h: 'Acid skies',
+      kick: 'It rains acid that never lands.',
+      paras: [
+      'The clouds that fooled the Victorians are real chemistry: sulfuric acid droplets fifty kilometres up, so reflective the planet shines like a lamp. Below them the droplets evaporate — virga, like Titan’s methane rain — and sulfur compounds cycle back up on winds that circle the planet in four days while the ground turns once in 243.',
+      'In 2020 a team reported phosphine in those clouds, a gas that on Earth means either life or industry. The detection is fiercely debated — later looks disagree, and no consensus exists. Treat it as science in progress: a great excuse to watch how a claim gets stress-tested, not a discovery.',
+      'The clouds are also why the surface photographs look orange. Sunlight dies twice crossing the haze, and what reaches the basalt is the colour of old pennies. Stand on Venus and the sky would glow above you like a furnace door.'] },
+    { h: 'Your turn',
+      kick: 'Replay the kiln in the sandbox.',
+      paras: [
+      'The Venus world is this chapter, playable. Nothing alive survives it, so the quests are metallurgy: volcanic glass from basalt, marble from reef rock, diamonds from coal, steel from charcoal and ore — every one of them honest about the heat budget, because the planet supplies the furnace free.',
+      'Then the long game. Paint an ocean on the basalt and watch what the models say happened: steam takes the sky and never comes back. The deuterium gauge in the journal is counting while you watch.',
+      'Venus is the control experiment for every other world in the game. Earth with the thermostat broken. Run the numbers yourself — and read the journal when your first ocean boils.'] },
+  ],
+  experiment: { title: 'Replay it: boil an ocean',
+    steps: ['Open the Venus world and paint a WATER ocean on the basalt; watch it flash to steam.',
+    'Forge volcanic GLASS from basalt, then MARBLE, DIAMOND and STEEL — the full kiln line.',
+    'Hold a lava lake open by pouring fresh LAVA faster than crust wins.',
+    'Try planting one moss spore, and read the warning the game gives you.'] },
+  sources: [
+    'https://en.wikipedia.org/wiki/Venera',
+    'https://science.nasa.gov/venus/'],
+  dramatized: 'The “work shift” framing and “parasol” metaphor are imagined. Venera landing dates and survival times (Venera 13 at 127 minutes), surface temperature and pressure, retrograde spin, deuterium evidence for water loss, and the debated phosphine detection are from the cited sources.'
+},
+'hadean-dawn': {
+  title: 'Hell With Water',
+  sub: 'The first half-billion years ran hot, anoxic and bombarded — from Jack Hills zircons and the faint young Sun.',
+  minutes: 12,
+  paper: 'Jack Hills zircon record (Wilde et al., 2001 and successors) — 4.4-billion-year-old crust',
+  also: 'Faint young Sun paradox and Hadean climate modelling',
+  level: 'active research',
+  pages: [
+    { h: 'Named for the underworld',
+      kick: 'Magma oceans, then rain.',
+      paras: [
+      'The Hadean runs from Earth’s birth to about four billion years ago, named for Hades because the first act is genuinely hellish: a Moon-forming collision that melted the whole planet, a glowing magma ocean, and an atmosphere of vaporised rock. Nothing in it would recognise the Earth as family.',
+      'Then it cooled — fast, by geological standards. Within a couple of hundred million years the rains began, and the steam condensed into oceans on a planet still being resurfaced by lava. Hell with water: that contradiction is the whole chapter.',
+      'The sandbox opens there. Lava vents, sulfur skies, no oxygen anywhere, acid brewing at the fumaroles — and, against every instinct, the first gardens. The Hadean world is the only one where heat is a resource instead of a hazard.'] },
+    { h: 'The pebbles that rewrote hell',
+      kick: 'One crystal, 4.4 billion years old.',
+      paras: [
+      'For decades textbooks drew the Hadean as unbroken lava. Then geologists in Western Australia’s Jack Hills found zircons — grains of staggeringly tough mineral — dated to 4.4 billion years, barely 150 million after the planet formed. Zircons grow in continental-type magmas, and these ones carry chemical fingerprints of liquid water.',
+      'One pebble does not make a beach, but hundreds of such grains now say the same thing: solid crust, liquid water, maybe even continents, hundreds of millions of years earlier than anyone expected. Hell had beaches.',
+      'That is why the Hadean chapter matters for origins. If oceans existed that early, the cradle had far more time than the lava-everywhere picture allowed — and the chemistry had water to work in. Your vent pools in the game sit on exactly that bet.'] },
+    { h: 'The dim sun problem',
+      kick: 'Sunlight at 70%, oceans anyway.',
+      paras: [
+      'Stars brighten as they age, and four billion years ago the Sun shone about 30 percent dimmer. A dimmer sun over a watery Earth should mean a frozen Earth — yet the zircons say liquid water. That contradiction is the faint young Sun paradox, astronomy’s longest invoice.',
+      'The leading payment is greenhouse gas: a thick early atmosphere of carbon dioxide, methane and maybe hydrogen, holding in what little sun there was. Sagan and Mullen priced it in 1972 and the account has roughly balanced since, with the exact gas mix still argued over.',
+      'The paradox cuts both ways, which is why Venus gets a chapter too. Earth held its water with greenhouse help; Venus lost its oceans to greenhouse excess. Same physics, opposite outcomes — and Mars froze for lack of either. Three planets, one equation.'] },
+    { h: 'Bombardment',
+      kick: 'Delivery trucks or sterilisation crews?',
+      paras: [
+      'Through all of this, rocks kept falling. Whether impacts arrived as one late cataclysm or a long drizzle is still contested — the famous Late Heavy Bombardment may be partly a sampling mirage — but the early Earth was unquestionably hit, hard and often.',
+      'Each side of the argument hands the origin story something. Impacts deliver organics and metals, dig hydrothermal systems, and melt ice into lakes; big enough impacts also boil oceans and reset the clock. Life, if it started early, may have started more than once — with only the last attempt surviving to leave descendants.',
+      'The game compresses the drizzle into gameplay: meteors are offstage, but the chemistry they fed — sulfur skies, acid ponds, hot brine pools — is the Hadean world’s whole weather system. Garden in it accordingly.'] },
+    { h: 'Your turn',
+      kick: 'Replay the cradle in the sandbox.',
+      paras: [
+      'The Hadean world is this chapter, playable. Brew acid at a vent, garden germs under glass, bloom archaea in a hot pool by day — then push toward the Genesis note, the game’s abiogenesis moment, in salted vent brine under a dome.',
+      'Then the new work. Soda flats crust trona where damp salt meets lime, and the hot-spring quest wants twelve archaea before dusk. The cradle rewards mornings: seed early, read the pool temperature, and never trust the night.',
+      'The Hadean is the origin story with the serial numbers filed by time. Run the chemistry yourself — and read the journal when your first pool blooms.'] },
+  ],
+  experiment: { title: 'Replay it: a morning in the Hadean',
+    steps: ['Open the Hadean world, wall a ROCK basin and fill a WATER pool inside it.',
+    'Seed ARCHAEA the same morning and count the bloom before dusk.',
+    'Salt a flat with LIME scattered and mist it to crust TRONA.',
+    'Push a vent pool toward the Genesis note: brine, dome, patience.'] },
+  sources: [
+    'https://en.wikipedia.org/wiki/Hadean',
+    'https://en.wikipedia.org/wiki/Faint_young_Sun_paradox'],
+  dramatized: 'The “invoice” and “delivery trucks” framings are imagined. The magma ocean and Moon-forming impact, Jack Hills zircon ages and water fingerprints, the 30-percent-dimmer Sun, the contested bombardment chronology, and the greenhouse-gas resolution are from the cited sources.'
+},
 };
