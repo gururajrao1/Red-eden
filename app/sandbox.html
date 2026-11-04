@@ -58,6 +58,7 @@ if ('serviceWorker' in navigator) {
 #pfilter{width:100%;box-sizing:border-box;background:var(--slab);color:var(--bone);
   border:1px solid var(--seam);border-radius:8px;padding:7px 10px;font-size:12.5px;margin-bottom:6px}
 #ticker{min-height:20px;font-size:12px;color:var(--amber);font-family:monospace}
+#rng-brush{width:90px;accent-color:var(--amber)}
 @media (max-width:1080px){#sblayout{grid-template-columns:minmax(0,1fr)}#side{grid-column:1/-1}}
 </style>
 </head>
@@ -71,16 +72,19 @@ if ('serviceWorker' in navigator) {
 <main id="sblayout">
   <section id="stage">
     <div id="envbar">
-      <button data-world="earth">Earth</button>
+      <button data-world="earth" class="on">Earth</button>
       <button data-world="moon">Moon</button>
-      <button data-world="mars" class="on">Mars</button>
+      <button data-world="mars">Mars</button>
       <button data-world="europa">Europa</button>
+      <button data-world="titan">Titan</button>
       <button data-world="hadean">Hadean</button>
+      <button data-world="venus">Venus</button>
       <span id="clock" class="tick"></span>
       <button id="btn-pause" title="space">II</button>
       <button id="btn-step" title="advance one tick while paused">step</button>
       <button id="btn-speed" title="F">1×</button>
       <button id="btn-brush-dec" title="shrink pointer [">−</button>
+      <input id="rng-brush" type="range" min="0" max="6" step="1" value="2" title="pointer size: 0 = single tile, 6 = megabuild" aria-label="pointer size">
       <button id="btn-brush" title="grow pointer ]">●●○○</button>
       <button id="btn-view" title="toggle heat vision">heat</button>
       <button id="btn-mute" title="toggle sound">sfx on</button>
@@ -122,8 +126,8 @@ if ('serviceWorker' in navigator) {
   <div class="card">
     <h1>SAND<span>/</span>BOX</h1>
     <p class="sub">every material reacts to its world</p>
-    <p>Pick a category below the yard — Ground, Fire, Air &amp; boom, Solids, Life,
-    Tech — and paint: clay, gunpowder, cryo, fungus, concrete, helium and more.
+    <p>Pick a category below the yard — Ground, Liquids &amp; fire, Air &amp; boom, Solids,
+    Energy, Life, Tech, Tools — and paint: clay, gunpowder, cryo, fungus, concrete, helium and more.
     Then flip worlds and watch the same materials misbehave differently. Finish each
     world's problems, read the field notes, learn the science by doing.
     Every reaction you cause logs itself in your field journal.</p>
@@ -131,11 +135,12 @@ if ('serviceWorker' in navigator) {
       <li>Start on Earth: follow the ★ NEXT problem in the Problems panel.</li>
       <li>Wet beds before planting (sprinkler, or a pool touching the soil) — dry-planted seeds die in seconds.</li>
       <li>On cold worlds, warm the bed with a heater and plant by day; one gadget per tile, paint order matters.</li>
+      <li>Resize the pointer with the slider (or −/+ buttons, or [ ]) — 0 paints a single tile, 6 raises megastructures.</li>
     </ol>
     <button id="btn-start">Start mixing →</button>
   </div>
 </div>
-<script src="simsandbox.js?v=15"></script>
-<script src="sandbox.js?v=18"></script>
+<script src="simsandbox.js?v=20"></script>
+<script src="sandbox.js?v=24"></script>
 </body>
 </html>

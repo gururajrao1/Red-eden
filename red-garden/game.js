@@ -5,7 +5,7 @@
 
 // ---- config ---------------------------------------------------------------
 const W = 40, H = 26, TILE = 20, UV = 0.55;
-const T = { REG: 0, ROCK: 1, ICE: 2, SOIL: 3, WATER: 4, MOSS: 5 };
+const T = { REG: 0, ROCK: 1, ICE: 2, SOIL: 3, WATER: 4, MOSS: 5, HEATER: 6 };
 const TOOLS = {
   germs: { name: 'Germs', cost: 4, r: 1, color: '#A3E635', blurb: 'seed living microbes' },
   soil:  { name: 'Soil', cost: 3, r: 2, color: '#8a5a2b', blurb: 'turn dirt fertile' },
@@ -13,8 +13,12 @@ const TOOLS = {
   moss:  { name: 'Moss', cost: 4, r: 1, color: '#3fae4a', blurb: 'needs wet soil + germs' },
   scrub: { name: 'Scrub', cost: 6, r: 3, color: '#FFB000', blurb: 'destroy perchlorate' },
   dome:  { name: 'Dome', cost: 18, r: 3, color: '#2DD4BF', blurb: 'UV shield bubble' },
+  heater: { name: 'Heater', cost: 10, r: 2, color: '#c86a20', blurb: 'melts nearby ice, cooks germs off' },
+  human: { name: 'Human', cost: 15, r: 0, color: '#e8b838', blurb: 'eats moss, starves in ~6 sols' },
+  dino:  { name: 'Dino', cost: 12, r: 0, color: '#4a9a3a', blurb: 'grazes moss, breeds when fed' },
+  critter: { name: 'Critter', cost: 8, r: 0, color: '#8a5a3a', blurb: 'terraformer: soils wet dirt' },
 };
-const ORDER = ['germs', 'soil', 'ice', 'moss', 'scrub', 'dome'];
+const ORDER = ['germs', 'soil', 'ice', 'moss', 'scrub', 'dome', 'heater', 'human', 'dino', 'critter'];
 
 // ---- rng ------------------------------------------------------------------
 function mulberry32(seed) {
@@ -67,7 +71,8 @@ function createWorld(seed) {
     terr: new Uint8Array(W * H), pois: new Float32Array(W * H),
     moist: new Float32Array(W * H), germ: new Float32Array(W * H),
     shield: new Uint8Array(W * H),
-    quests: [false, false, false, false], codex: {},
+    quests: [false, false, false, false, false, false, false, false, false, false, false, false], codex: {},
+    units: [],
     tips: {}, deaths: 0, won: false, frame: 0,
   };
   w.pois.fill(0.15);
@@ -121,10 +126,15 @@ function applyTool(w, tool, cx, cy) {
       if (w.pois[i] > 0.02) { w.pois[i] = Math.max(0, w.pois[i] - 0.8); changed = true; }
     } else if (tool === 'dome') {
       if (t !== T.ROCK) { w.shield[i] = 1; changed = true; }
+    } else if (tool === 'heater') {
+      if (t === T.REG || t === T.SOIL) { w.terr[i] = T.HEATER; changed = true; w.sawHeat = true; }
+    } else if (tool === 'human' || tool === 'dino' || tool === 'critter') {
+      if (t !== T.ROCK) { w.units.push({ k: tool, x, y, fed: 0, age: 0 }); changed = true; }
     }
   });
   if (!changed) {
     if (tool === 'moss') return 'Moss needs wet soil with germs — or very wet bare dirt crawling with them.';
+    if (tool === 'human' || tool === 'dino' || tool === 'critter') return 'Animals need open ground — not bare rock.';
     return 'Nothing to do there — try different ground.';
   }
   w.energy -= def.cost;
@@ -154,7 +164,7 @@ function stepWorld(w) {
       let warm = false;
       neighbors(w, x, y, j => {
         const n = w.terr[j];
-        if (n === T.SOIL || n === T.MOSS || n === T.WATER) warm = true;
+        if (n === T.SOIL || n === T.MOSS || n === T.WATER || n === T.HEATER) warm = true;
       });
       if (warm && R() < 0.12) { w.terr[i] = T.WATER; w.moist[i] = 1; }
     } else if (t === T.WATER) {
@@ -184,7 +194,7 @@ function stepWorld(w) {
     let ng = g + g * 0.25 * wet * (1 - poisHit) - g * uvKill * 0.4;
     if (w.pois[i] > 0.8) ng *= 0.9;
     ng = Math.min(60, Math.max(0, ng));
-    if (t === T.ROCK || t === T.ICE) ng = 0;
+    if (t === T.ROCK || t === T.ICE || t === T.HEATER) ng = 0; // heaters sterilise their own tile
     w.deaths += Math.max(0, before - ng);
     w.germ[i] = ng;
     if (ng > 1) {
@@ -214,19 +224,110 @@ function stepWorld(w) {
   }
   for (const j of spread) if (w.terr[j] === T.SOIL) w.terr[j] = T.MOSS;
   for (const j of enrich) if (w.terr[j] === T.REG) w.terr[j] = T.SOIL;
+  // walking animals: humans farm moss, dinos mow it, critters soil the dirt
+  const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  const freeTx = (x, y, swim) => {
+    if (!inB(x, y)) return false;
+    const t = w.terr[idx(x, y)];
+    return t !== T.ROCK && (swim || (t !== T.WATER && t !== T.ICE));
+  };
+  let dinos = 0;
+  for (const u of w.units) if (u.k === 'dino') dinos++;
+  for (let k = w.units.length - 1; k >= 0; k--) {
+    const u = w.units[k];
+    u.age++;
+    const i = idx(u.x, u.y);
+    if (u.k === 'human') {
+      // eat adjacent moss, else go hungry
+      let ate = false;
+      for (const [dx, dy] of DIRS) {
+        const nx = u.x + dx, ny = u.y + dy;
+        if (!inB(nx, ny)) continue;
+        if (w.terr[idx(nx, ny)] === T.MOSS && R() < 0.5) {
+          w.terr[idx(nx, ny)] = T.SOIL; u.fed = 0; ate = true; break;
+        }
+      }
+      if (!ate) u.fed++;
+      if (u.fed > 6) { w.units.splice(k, 1); continue; } // starved
+      // wander toward lunch: step onto moss, else drift
+      const opts = [];
+      for (const [dx, dy] of DIRS) {
+        const nx = u.x + dx, ny = u.y + dy;
+        if (!freeTx(nx, ny, false)) continue;
+        opts.push([nx, ny, w.terr[idx(nx, ny)] === T.MOSS ? 0 : 1]);
+      }
+      if (opts.length) {
+        opts.sort((a, b) => a[2] - b[2]);
+        const pick = opts[(R() * Math.min(2, opts.length)) | 0];
+        u.x = pick[0]; u.y = pick[1];
+      }
+    } else if (u.k === 'dino') {
+      // graze the neighbourhood, breed when fat, starve when the field is bare
+      let graze = false;
+      const spots = [[u.x, u.y], [u.x + 1, u.y], [u.x - 1, u.y], [u.x, u.y + 1], [u.x, u.y - 1]];
+      for (const [gx, gy] of spots) {
+        if (!inB(gx, gy)) continue;
+        if (w.terr[idx(gx, gy)] === T.MOSS && R() < 0.6) {
+          w.terr[idx(gx, gy)] = T.SOIL; u.fed = 0; graze = true; break;
+        }
+      }
+      if (!graze) u.fed++;
+      if (u.fed > 8) { w.units.splice(k, 1); dinos--; continue; }
+      if (u.fed <= 1 && dinos < 24 && R() < 0.15) {
+        for (const [dx, dy] of DIRS) {
+          const nx = u.x + dx, ny = u.y + dy;
+          if (!freeTx(nx, ny, false)) continue;
+          w.units.push({ k: 'dino', x: nx, y: ny, fed: 3, age: 0 }); dinos++;
+          break;
+        }
+      }
+      const opts = [];
+      for (const [dx, dy] of DIRS) {
+        const nx = u.x + dx, ny = u.y + dy;
+        if (!freeTx(nx, ny, false)) continue;
+        opts.push([nx, ny, w.terr[idx(nx, ny)] === T.MOSS ? 0 : 1]);
+      }
+      if (opts.length) {
+        opts.sort((a, b) => a[2] - b[2]);
+        const pick = opts[(R() * Math.min(2, opts.length)) | 0];
+        u.x = pick[0]; u.y = pick[1];
+      }
+    } else { // critter: hardy burrower, soils wet dirt, snacks on germs
+      if ((w.terr[i] === T.REG || w.terr[i] === T.SOIL) && w.moist[i] > 0.3 && R() < 0.3) {
+        w.terr[i] = T.SOIL;
+      }
+      if (w.germ[i] > 5 && R() < 0.3) w.germ[i] *= 0.5;
+      const opts = [];
+      for (const [dx, dy] of DIRS) {
+        const nx = u.x + dx, ny = u.y + dy;
+        if (freeTx(nx, ny, true)) opts.push([nx, ny]);
+      }
+      if (opts.length && R() < 0.7) {
+        const pick = opts[(R() * opts.length) | 0];
+        u.x = pick[0]; u.y = pick[1];
+      }
+    }
+  }
   return { germSum };
 }
 
 // ---- stats / quests / codex -----------------------------------------------
 function stats(w) {
-  let water = 0, moss = 0, germs = 0, pois = 0;
+  let water = 0, moss = 0, germs = 0, pois = 0, shield = 0;
+  let humans = 0, dinos = 0, critters = 0;
   for (let i = 0; i < W * H; i++) {
     if (w.terr[i] === T.WATER) water++;
     if (w.terr[i] === T.MOSS) moss++;
+    if (w.shield[i]) shield++;
     germs += w.germ[i]; pois += w.pois[i];
   }
+  for (const u of (w.units || [])) {
+    if (u.k === 'human') humans++;
+    else if (u.k === 'dino') dinos++;
+    else critters++;
+  }
   return { water, moss, germs: Math.round(germs), poisFrac: pois / w.pois0,
-           greenPct: Math.round(100 * moss / (W * H)) };
+           greenPct: Math.round(100 * moss / (W * H)), shield, humans, dinos, critters };
 }
 
 const QUESTS = [
@@ -238,6 +339,22 @@ const QUESTS = [
     done: s => s.poisFrac <= 0.5, prog: s => Math.round(100 * (1 - s.poisFrac)) + '% cleaned' },
   { id: 'q4', name: 'Green Mars', goal: 'grow 120 moss tiles',
     done: s => s.moss >= 120, prog: s => Math.min(s.moss, 120) + '/120 moss' },
+  { id: 'q5', name: 'Raise shields', goal: 'hold 60 dome tiles',
+    done: s => s.shield >= 60, prog: s => Math.min(s.shield, 60) + '/60 shielded' },
+  { id: 'q6', name: 'Teeming garden', goal: 'keep 1500 microbes alive',
+    done: s => s.germs >= 1500, prog: s => Math.min(s.germs, 1500) + '/1500 germs' },
+  { id: 'q7', name: 'Deep clean', goal: 'cut poison to a quarter',
+    done: s => s.poisFrac <= 0.25, prog: s => Math.round(100 * (1 - s.poisFrac)) + '% cleaned' },
+  { id: 'q8', name: 'Paradise', goal: 'turn 15% of Mars green',
+    done: s => s.greenPct >= 15, prog: s => Math.min(s.greenPct, 15) + '/15% green' },
+  { id: 'q9', name: 'Warm blood', goal: 'keep 20 humans alive',
+    done: s => s.humans >= 20, prog: s => Math.min(s.humans, 20) + '/20 humans' },
+  { id: 'q10', name: 'Giant herd', goal: 'hold a 12-strong dino herd',
+    done: s => s.dinos >= 12, prog: s => Math.min(s.dinos, 12) + '/12 dinos' },
+  { id: 'q11', name: 'Dome city', goal: 'keep 30 humans alive',
+    done: s => s.humans >= 30, prog: s => Math.min(s.humans, 30) + '/30 humans' },
+  { id: 'q12', name: 'Soil crew', goal: 'work 8 critters at once',
+    done: s => s.critters >= 8, prog: s => Math.min(s.critters, 8) + '/8 critters' },
 ];
 
 const CODEX = {
@@ -253,8 +370,25 @@ const CODEX = {
     body: 'Mars has almost no ozone, so harsh UV sterilises bare ground. Real survivors hide under dust or in salt crusts — or under your domes, exactly as you just learned.' },
   genes: { title: 'Germs trade genes',
     body: 'Bacteria swap genes directly with neighbours — horizontal transfer — spreading tricks like poison-eating far faster than parent-to-child inheritance. Your colony just evolved that way.' },
+  heat: { title: 'Bottled summer',
+    body: 'A heater is a campfire that never goes out. On Mars, warmth is a resource: ice only melts beside something warmer, so every puddle starts as a temperature gradient.' },
+  shield: { title: 'Domes hold the sky',
+    body: 'Mars has almost no ozone, so UV sterilises bare ground — but glass eats UV for breakfast. Every greenhouse ever built is a tiny argument that shelter beats toughness.' },
+  teem: { title: 'Strength in numbers',
+    body: 'A thousand microbes do what one cannot: share genes, split labour, survive disasters. Crowds are a survival technology — that is why your colony only detoxes at scale.' },
+  eden: { title: 'Paradise is a gradient',
+    body: 'No one terraform Mars in a day; they tilt the odds — a little warmer, a little wetter, a little cleaner — until green outruns red. You just tilted a whole planet.' },
+  blood: { title: 'Warm blood in a cold desert',
+    body: 'Humans are just picky moss-farmers: they need food every few sols and die without it. Every colony ship is a lunchbox with engines — farming comes before flags.' },
+  herd: { title: 'Thunder lizards, pocket-sized',
+    body: 'Big grazers mow plants, spread seeds in dung and trample the rest. Your dinos prune the moss so hard it grows back thicker — that is grazing ecology, minus the meteor.' },
+  city: { title: 'Cities are applied ecology',
+    body: 'Thirty hungry humans eat a moss field a day. Every city in history is a farm that learned to walk — yours just happens to be on Mars.' },
+  crew: { title: 'The soil crew',
+    body: 'Earthworms turn 30 tonnes of soil per hectare per year — Darwin wrote a whole book about them. Your critters do the same commute, one tile at a time.' },
 };
-const QUEST_CODEX = ['water', 'germs', 'poison', 'green'];
+const QUEST_CODEX = ['water', 'germs', 'poison', 'green', 'shield', 'teem', 'poison', 'eden', 'blood', 'herd',
+  'city', 'crew'];
 
 // Returns {quests:[ids completed this tick], codex:[ids unlocked]} — pure.
 function checkProgress(w, s) {
@@ -268,6 +402,7 @@ function checkProgress(w, s) {
     }
   });
   if (w.deaths > 40 && !w.codex.sun) { w.codex.sun = true; out.codex.push('sun'); }
+  if (w.sawHeat && !w.codex.heat) { w.codex.heat = true; out.codex.push('heat'); }
   if (w.reducer >= 0.5 && !w.codex.genes) { w.codex.genes = true; out.codex.push('genes'); }
   if (w.quests.every(Boolean)) w.won = true;
   return out;
@@ -279,7 +414,7 @@ function hash2(x, y) {
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
-const BASE = ['#8a3b22', '#4a3430', '#bfe8ff', '#7a4d26', '#1d5f8a', '#2f8a3d'];
+const BASE = ['#8a3b22', '#4a3430', '#bfe8ff', '#7a4d26', '#1d5f8a', '#2f8a3d', '#c86a20'];
 
 function drawWorld(w, ctx, cursor) {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -319,6 +454,11 @@ function drawWorld(w, ctx, cursor) {
       ctx.fillRect(px + 4, py + 8, 3, 3);
       ctx.fillRect(px + 12, py + 5, 3, 3);
     }
+    if (t === T.HEATER) { // campfire glow pulse
+      ctx.fillStyle = ((w.frame >> 4) + x + y) % 2 ? '#ffd060' : '#ff9040';
+      ctx.fillRect(px + 6, py + 3, 8, 4);
+      ctx.fillRect(px + 8, py + 12, 4, 5);
+    }
     if (t === T.ROCK) {
       ctx.fillStyle = 'rgba(0,0,0,.35)';
       ctx.fillRect(px + 2, py + 12, 16, 6);
@@ -342,6 +482,27 @@ function drawWorld(w, ctx, cursor) {
       ctx.strokeStyle = 'rgba(45,212,191,.8)';
       ctx.lineWidth = 1;
       ctx.strokeRect(px + 1.5, py + 1.5, TILE - 3, TILE - 3);
+    }
+  }
+  // walking animals: amber keepers, green grazers, brown burrowers
+  for (const u of (w.units || [])) {
+    const px = u.x * TILE, py = u.y * TILE;
+    if (u.k === 'human') {
+      ctx.fillStyle = '#e8b838';
+      ctx.fillRect(px + 7, py + 8, 6, 8);
+      ctx.fillStyle = '#f4d8a8';
+      ctx.fillRect(px + 8, py + 4, 4, 4);
+    } else if (u.k === 'dino') {
+      const step = (w.frame + u.x + u.y) % 2 === 0;
+      ctx.fillStyle = '#4a9a3a';
+      ctx.fillRect(px + 4, py + 9, 11, 6);
+      ctx.fillRect(px + (step ? 3 : 13), py + 7, 4, 4);
+      ctx.fillRect(px + 2, py + 10, 2, 3);
+    } else {
+      ctx.fillStyle = '#8a5a3a';
+      ctx.fillRect(px + 4, py + 12, 4, 4);
+      ctx.fillRect(px + 9, py + 10, 4, 4);
+      ctx.fillRect(px + 13, py + 13, 3, 3);
     }
   }
   // brush cursor
@@ -377,6 +538,9 @@ if (typeof window !== 'undefined') (function () {
     [w => w.sol === 30 && !w.tips.germ, 'Tip: seed GERMS (1) on wet ground. They multiply where it is damp.'],
     [w => stats(world).germs > 60 && !world.tips.uv, 'Watch out: bare sun kills germs. A DOME (6) over your colony saves lives.'],
     [w => stats(world).moss > 0 && !world.tips.moss, 'Moss spreads by itself across wet, germy soil. Give it room.'],
+    [w => stats(world).water > 0 && !world.tips.heat, 'Cold corners? A HEATER (7) melts ice that soil cannot reach.'],
+    [w => (world.units || []).some(u => u.k === 'human') && !world.tips.fed,
+      'Humans eat neighbouring moss — paint them (8) inside a big green field, or they starve in ~6 sols.'],
   ];
 
   function say(msg) { $('ticker').textContent = msg; }
@@ -421,7 +585,7 @@ if (typeof window !== 'undefined') (function () {
         : '<h4>??? — locked</h4><p>Keep playing: solve problems and survive disasters to unlock this page.</p>';
       ol.appendChild(li);
     });
-    $('codex-n').textContent = n + '/6';
+    $('codex-n').textContent = n + '/' + Object.keys(CODEX).length;
   }
 
   function paintAt(ev) {
@@ -449,8 +613,10 @@ if (typeof window !== 'undefined') (function () {
   canvas.addEventListener('pointerleave', () => { cursor = null; painting = false; });
 
   window.addEventListener('keydown', ev => {
-    if (ev.key >= '1' && ev.key <= '6') {
+    if (ev.key >= '1' && ev.key <= '9') {
       tool = ORDER[+ev.key - 1]; buildToolbar(); sfx.place();
+    } else if (ev.key === '0') {
+      tool = ORDER[9]; buildToolbar(); sfx.place();
     } else if (ev.key === ' ') { ev.preventDefault(); togglePause(); }
     else if (ev.key === 'f' || ev.key === 'F') toggleSpeed();
   });
@@ -519,11 +685,8 @@ if (typeof window !== 'undefined') (function () {
       say('Field guide unlocked: ' + CODEX[id].title);
       buildCodex();
     });
-    TIPS.forEach(([cond, msg]) => {
-      if (cond(world)) { say(msg); }
-    });
-    TIPS.forEach((t, k) => {
-      if (t[0](world) && !world.tips['k' + k]) world.tips['k' + k] = true;
+    TIPS.forEach(([cond, msg], k) => {
+      if (cond(world) && !world.tips['k' + k]) { world.tips['k' + k] = true; say(msg); }
     });
     if (world.won && $('winOverlay').hidden) {
       $('winOverlay').hidden = false;

@@ -100,7 +100,7 @@ ok('europa unlocks at 400', vm.runInContext(`isUnlocked('europa')`, sb) === true
 ok('hadean waits for 1000', vm.runInContext(`isUnlocked('hadean')`, sb) === false, '');
 vm.runInContext(`refreshQuests()`, sb);
 ok('rank names the grad student', els.rank.textContent === 'Grad student', els.rank.textContent);
-ok('next unlock advertised', els.unlocknext.textContent.includes('hadean'), els.unlocknext.textContent);
+ok('next unlock advertised', els.unlocknext.textContent.includes('titan'), els.unlocknext.textContent);
 euBtn.click();
 ok('europa opens at 400 RP', vm.runInContext(`world.id`, sb) === 'europa', vm.runInContext(`world.id`, sb));
 haBtn.click();

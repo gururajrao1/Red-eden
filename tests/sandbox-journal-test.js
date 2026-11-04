@@ -66,8 +66,9 @@ els['btn-start'].click();
 vm.runInContext(`world = createWorld('earth', 5)`, sb); // air, mild: fire spreads
 pick('Wood'); strokeAt(32, 20);
 pick('Fire'); strokeAt(34, 22); // spark the edge: fuel must survive the strike
-for (let k = 0; k < 25; k++) vm.runInContext(`tick()`, sb); // under sol 30: no quest takes the ticker
-ok('ticker teaches the fire triangle', els.ticker.textContent.includes('triangle'),
+let sawTriangle = false; // the ticker shows the latest lesson, so watch every tick, not just the last
+for (let k = 0; k < 25; k++) { vm.runInContext(`tick()`, sb); if (els.ticker.textContent.includes('triangle')) sawTriangle = true; } // under sol 30: no quest takes the ticker
+ok('ticker teaches the fire triangle', sawTriangle,
   JSON.stringify(els.ticker.textContent.slice(0, 90)));
 const keys = vm.runInContext(`Object.keys(journal)`, sb);
 ok('journal logged ignite on earth', keys.includes('ignite')

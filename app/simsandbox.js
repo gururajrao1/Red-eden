@@ -19,17 +19,24 @@ const E = { EMPTY: 0, REGOLITH: 1, ROCK: 2, SAND: 3, SOIL: 4, ICE: 5, SALT: 6,
             PAPER: 58, SALTPETRE: 59, CHALK: 60, QUARTZ: 61, COPPERORE: 62,
             WAX: 63, AMBER: 64, SEED: 65, RUBBER: 66, BONE: 67, VENT: 68,
             BASALT: 69, PERMAFROST: 70, STEEL: 71, COMPOST: 72, SLUSH: 73,
-            EMBER: 74, PHOSPHORUS: 75, MUD: 76, SINTER: 77, TUFF: 78 };
+            EMBER: 74, PHOSPHORUS: 75, MUD: 76, SINTER: 77, TUFF: 78,
+            WALL: 79, VOID: 80, CLONE: 81, BATTERY: 82, WIRE: 83, DIAMOND: 84,
+            GOLD: 85, MARBLE: 86, SUGAR: 87, MEAT: 88,
+            SHALE: 89, SAP: 90, FOSSIL: 91 };
 const LIFE = { NONE: 0, GERMS: 1, MOSS: 2, GRASS: 3, ALGAE: 4, FUNGUS: 5, LICHEN: 6, LOCUSTS: 7,
-  CORAL: 8, CACTUS: 9, SPONGE: 10, FERN: 11, WORMS: 12, TERMITES: 13 };
+  CORAL: 8, CACTUS: 9, SPONGE: 10, FERN: 11, WORMS: 12, TERMITES: 13,
+  VIRUS: 14, FISH: 15, BIRD: 16, ANT: 17, TREE: 18,
+  MUSHROOM: 19, KELP: 20, FLOWER: 21, BEE: 22 };
 const TECH = { NONE: 0, HEATER: 1, DOME: 2, SPRINKLER: 3, SHADE: 4, KILN: 5, SCARECROW: 6 };
 const POWDER = new Set([E.SAND, E.SALT, E.ASH, E.SNOW, E.CLAY, E.GUNPOWDER, E.SULFUR, E.FERTILIZER, E.PUMICE, E.GRAVEL,
-  E.SAWDUST, E.COAL, E.DUST, E.HAIL, E.SALTPETRE, E.LIME, E.SEED, E.COMPOST, E.PHOSPHORUS]);
+  E.SAWDUST, E.COAL, E.DUST, E.HAIL, E.SALTPETRE, E.LIME, E.SEED, E.COMPOST, E.PHOSPHORUS, E.SUGAR]);
 const LIQUID = new Set([E.WATER, E.BRINE, E.ACID, E.LAVA, E.OIL, E.CRYO, E.MERCURY, E.FOAM, E.CEMENT]);
 const GAS = new Set([E.STEAM, E.SMOKE, E.CLOUD, E.HYDROGEN, E.OXYGEN, E.METHANE, E.HELIUM, E.CO2, E.NITROGEN, E.CHLORINE]);
 // thermal conductivity per element (metal fast, gases slow)
 function condOf(e) {
-  if (e === E.METAL || e === E.STEEL) return 0.6;
+  if (e === E.WIRE) return 0.7; // wire is a heat pipe: heater warmth runs down it
+  if (e === E.METAL || e === E.STEEL || e === E.GOLD) return 0.6;
+  if (e === E.DIAMOND) return 0.5;
   if (e === E.LEAD) return 0.5;
   if (e === E.MERCURY || e === E.COPPER) return 0.6;
   if (e === E.RUBBER || e === E.WAX || e === E.AMBER) return 0.005; // insulators hold heat out
@@ -67,7 +74,7 @@ function explode(w, x, y, r) {
         queue.push([cx + dx, cy + dy, 6]);
         continue;
       }
-      if (n === E.ROCK || n === E.LAVA || n === E.CONCRETE || n === E.GRANITE || n === E.BASALT || n === E.STEEL) continue; // blast-proof
+      if (n === E.ROCK || n === E.LAVA || n === E.CONCRETE || n === E.GRANITE || n === E.BASALT || n === E.STEEL || n === E.WALL || n === E.DIAMOND || n === E.VOID) continue; // blast-proof
       if (n === E.WOOD || n === E.OIL || n === E.EMBER) {
         w.el[j] = E.FIRE; w.wet[j] = 0; // stoking embers wakes them back to flame
       } else if (n === E.HYDROGEN || n === E.METHANE) {
@@ -94,6 +101,10 @@ const WORLDS = {
           uv: 0.4, blurb: 'Ice crust over a salty ocean; Jupiter radiation instead of sunburn.' },
   hadean: { name: 'Hadean Earth', g: 1.0, o2: 0, dayT: 55, nightT: 25, cycle: 60,
           uv: 0.9, blurb: 'Young Earth: lava vents, sulfur skies, no oxygen — fire needs a pocket of air.' },
+  titan: { name: 'Titan', g: 0.14, o2: 0, dayT: -180, nightT: -183, cycle: 90,
+          uv: 0.05, blurb: 'Orange haze, methane seas, -180° ice bedrock. Thick air, no oxygen, almost no seasons.' },
+  venus: { name: 'Venus', g: 0.9, o2: 0, dayT: 460, nightT: 440, cycle: 120,
+          uv: 0.3, blurb: 'Runaway greenhouse: 460° basalt plains, sulfur skies, volcanic glass. A kiln with weather.' },
 };
 
 function mulberry32(seed) {
@@ -125,7 +136,8 @@ function createWorld(worldId, seed) {
     tech: new Uint8Array(GN), wet: new Float32Array(GN), age: new Float32Array(GN), heat: new Float32Array(GN), hist: [], rot: 0,
     pt: new Float32Array(GN),
     ev: [], quests: {}, m1run: 0, wasNight: true };
-  w.el.fill(worldId === 'europa' ? E.ICE : (worldId === 'earth' ? E.SOIL : E.REGOLITH));
+  w.el.fill(worldId === 'europa' || worldId === 'titan' ? E.ICE :
+    (worldId === 'earth' ? E.SOIL : (worldId === 'venus' ? E.BASALT : E.REGOLITH)));
   for (let k = 0; k < 10; k++)
     blob(rng, w.el, GW, GH, (rng() * GW) | 0, (rng() * GH) | 0, 1 + ((rng() * 3) | 0), E.ROCK);
   if (worldId === 'earth') {
@@ -149,6 +161,22 @@ function createWorld(worldId, seed) {
     for (let k = 0; k < 3; k++)
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SULFUR);
     blob(rng, w.el, GW, GH, 14, 26, 4, E.WATER);       // one stubborn crater lake
+  } else if (worldId === 'titan') {
+    // hydrocarbon seas (oil stands in for liquid methane) + organic dunes on ice bedrock
+    for (let k = 0; k < 3; k++)
+      blob(rng, w.el, GW, GH, 8 + ((rng() * (GW - 16)) | 0), 8 + ((rng() * (GH - 16)) | 0), 4, E.OIL);
+    for (let k = 0; k < 3; k++)
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SAND);
+  } else if (worldId === 'venus') {
+    // volcanic lowlands: lava fields, sulfur frost, tessera granite, basalt sand
+    for (let k = 0; k < 3; k++)
+      blob(rng, w.el, GW, GH, 10 + ((rng() * (GW - 20)) | 0), 18 + ((rng() * (GH - 24)) | 0), 3, E.LAVA);
+    for (let k = 0; k < 4; k++)
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SULFUR);
+    for (let k = 0; k < 2; k++)
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 2, E.GRANITE);
+    for (let k = 0; k < 3; k++)
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SAND);
   } else {
     for (let k = 0; k < 5; k++)
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SALT);
@@ -256,6 +284,134 @@ function anchoredToStone(w, x, y) {
         n === E.LIMESTONE || n === E.VENT || n === E.BASALT || n === E.SINTER || n === E.TUFF) return true;
   }
   return false;
+}
+// overburden: sediment or stone piled directly above — burial pressure for
+// coal-to-diamond, mud-to-shale, bone-to-fossil, and it starves fire of air
+function buriedBy(w, x, y) {
+  if (y <= 0) return false;
+  const n = w.el[gidx(x, y - 1)];
+  return n === E.ROCK || n === E.BASALT || n === E.GRANITE || n === E.SAND ||
+    n === E.SOIL || n === E.SANDSTONE || n === E.LIMESTONE || n === E.MARBLE;
+}
+
+// habitability checklist: the deterministic survival gates for each lifeform,
+// in the same terms as the rules below (chance-based UV/predation excluded).
+// The inspector reads this live, so a death is always explainable on hover.
+// Returns [[label, ok]]; labels stay short for the readout line.
+function habitability(w, x, y, L) {
+  const i = gidx(x, y), e = w.el[i], t = w.pt[i], wet = Math.min(1, w.wet[i]);
+  const { dl } = worldTemp(w);
+  const soil = (e === E.SOIL || e === E.FERTILIZER);
+  const sea = (e === E.WATER || e === E.BRINE);
+  switch (L) {
+    case LIFE.GERMS: return [['damp', wet >= 0.2], ['mild', t >= -30 && t <= 60 + 60 * wet]];
+    case LIFE.MOSS: return [['mild', t >= -20 && t <= 45 + 80 * wet]];
+    case LIFE.GRASS: return [['soil', soil], ['air', airAt(w, x, y)], ['damp', wet >= 0.35], ['mild', t >= 0 && t <= 40]];
+    case LIFE.ALGAE: return [['water', sea], ['daylight', dl >= 0.25], ['mild', t >= -5 && t <= 45]];
+    case LIFE.FUNGUS: return [['host', e === E.WOOD || e === E.ASH || soil], ['damp', wet >= 0.4], ['mild', t >= -10 && t <= 45]];
+    case LIFE.LICHEN: return [['rock', e === E.ROCK || e === E.REGOLITH], ['mild', t >= -80 && t <= 50]];
+    case LIFE.LOCUSTS: {
+      let prey = false;
+      for (let dy = -1; dy <= 1 && !prey; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const L2 = w.life[gidx(x + dx, y + dy)];
+        if (L2 === LIFE.GRASS || L2 === LIFE.MOSS) { prey = true; break; }
+      }
+      return [['mild', t >= 0 && t <= 45], ['prey', prey],
+        ['unguarded', !techNear(w, x, y, TECH.SCARECROW, 6)]];
+    }
+    case LIFE.CORAL: return [['sea', sea], ['daylight', dl >= 0.25], ['mild', t >= 5 && t <= 35],
+      ['clean', !hasNbrW(w, x, y, n => n === E.ACID || n === E.CHLORINE)]];
+    case LIFE.CACTUS: return [['ground', e === E.SAND || e === E.SOIL || e === E.REGOLITH], ['warm', t >= 0 && t <= 60]];
+    case LIFE.SPONGE: return [['water', sea], ['mild', t >= -5 && t <= 40]];
+    case LIFE.FERN: return [['soil', soil], ['shade', techNear(w, x, y, TECH.SHADE, 5) || dl < 0.3],
+      ['damp', wet >= 0.4], ['mild', t >= 0 && t <= 35]];
+    case LIFE.WORMS: return [['soil', soil], ['mild', t >= 0 && t <= 40]];
+    case LIFE.TERMITES: {
+      let timber = (e === E.WOOD || e === E.PAPER);
+      if (!timber) {
+        for (let dy = -1; dy <= 1 && !timber; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+          const n = w.el[gidx(x + dx, y + dy)];
+          if (n === E.WOOD || n === E.PAPER) { timber = true; break; }
+        }
+      }
+      return [['timber', timber], ['mild', t >= 5 && t <= 45]];
+    }
+    case LIFE.VIRUS: {
+      let germsNear = false;
+      for (let dy = -1; dy <= 1 && !germsNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.GERMS) { germsNear = true; break; }
+      }
+      return [['germs', germsNear], ['mild', t >= -10 && t <= 45]];
+    }
+    case LIFE.FISH: {
+      let algaeNear = false;
+      for (let dy = -1; dy <= 1 && !algaeNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.ALGAE) { algaeNear = true; break; }
+      }
+      return [['water', sea], ['algae', algaeNear], ['mild', t >= 0 && t <= 35]];
+    }
+    case LIFE.BIRD: {
+      let gameNear = false;
+      for (let dy = -1; dy <= 1 && !gameNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.LOCUSTS) { gameNear = true; break; }
+      }
+      return [['air', airAt(w, x, y)], ['locusts', gameNear], ['mild', t >= 0 && t <= 40]];
+    }
+    case LIFE.ANT: {
+      let forageNear = false;
+      for (let dy = -1; dy <= 1 && !forageNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const n = w.el[gidx(x + dx, y + dy)];
+        if (n === E.SUGAR || n === E.MEAT || n === E.SEED) { forageNear = true; break; }
+      }
+      return [['soil', soil], ['forage', forageNear], ['mild', t >= 5 && t <= 40]];
+    }
+    case LIFE.TREE: return [['soil', soil], ['damp', wet >= 0.3], ['mild', t >= 0 && t <= 35]];
+    case LIFE.MUSHROOM: {
+      const mhost = (e === E.WOOD || e === E.ASH || e === E.SOIL || e === E.FERTILIZER || e === E.COMPOST);
+      let rotNear = false;
+      for (let dy = -1; dy <= 1 && !rotNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.FUNGUS) { rotNear = true; break; }
+      }
+      return [['host', mhost], ['rot', rotNear], ['damp', wet >= 0.4], ['shade', techNear(w, x, y, TECH.SHADE, 5) || dl < 0.3], ['mild', t >= 0 && t <= 35]];
+    }
+    case LIFE.KELP: return [['sea', sea], ['mild', t >= 0 && t <= 30]];
+    case LIFE.FLOWER: return [['soil', soil], ['damp', wet >= 0.3]]; // perennial: cold only pauses the bloom
+    case LIFE.BEE: {
+      let bloomNear = false;
+      for (let dy = -1; dy <= 1 && !bloomNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.FLOWER) { bloomNear = true; break; }
+      }
+      return [['bloom', bloomNear], ['mild', t >= 0 && t <= 40]];
+    }
+    default: return [];
+  }
+}
+// one-line planting advice: first failing check -> plain-language fix, or null when viable.
+// Used by the paint warning (and tested in tests/sandbox-habit-test.js).
+function habitExplain(checks, name) {
+  const HINT = {
+    soil: 'needs soil - paint soil first', air: 'needs air - dome it or stay on Earth',
+    damp: 'too dry - add water or a sprinkler', water: 'needs open water, not ice or slush - melt a pool',
+    sea: 'needs open water - melt a pool with heaters', mild: 'too hot or cold - heaters, domes or shade',
+    warm: 'too cold - add heat', daylight: 'needs daylight - plant by day, out of shade',
+    host: 'needs damp dead wood, ash or soil', rock: 'needs bare rock or regolith',
+    prey: 'needs grass or moss nearby to eat', unguarded: 'a scarecrow stands nearby - they will flee',
+    clean: 'acid or chlorine nearby - move away', ground: 'needs sand, soil or regolith',
+    shade: 'needs shade cloth or night - noon burns it', timber: 'needs wood or paper nearby',
+    germs: 'needs live germs nearby to hijack', algae: 'needs algae to graze',
+    locusts: 'needs locusts to hunt', forage: 'needs sugar, meat or seeds nearby',
+    bloom: 'needs flowers to work', rot: 'needs fungus rot nearby'
+  };
+  for (const [k, v] of checks) if (!v) return `${name}: ${HINT[k] || ('fails ' + k)}.`;
+  return null;
 }
 
 function stepWorld(w) {
@@ -448,8 +604,8 @@ function stepWorld(w) {
         if (inG(x + ox, y + oy) && w.el[gidx(x + ox, y + oy)] === E.ASH) buried++;
       if (buried >= 2) { w.el[i] = E.TUFF; w.ev.push(['set', x, y]); } // burial lithifies ash
     }
-    else if (e === E.SAND && (t > 800 || hotNbr(w, x, y, 800))) {
-      w.el[i] = E.GLASS; w.ev.push(['glaze', x, y]); // contact melting at the lava face
+    else if (e === E.SAND && (t > 600 || hotNbr(w, x, y, 600))) {
+      w.el[i] = E.GLASS; w.ev.push(['glaze', x, y]); // fluxes in dirty sand melt it before pure crystal
     }
     else if (e === E.SAND && hasNbr(x, y, n => n === E.VENT) &&
              hasNbr(x, y, n => n === E.WATER || n === E.BRINE) && R() < 0.008) {
@@ -467,8 +623,8 @@ function stepWorld(w) {
     else if (e === E.MUD && hasNbr(x, y, n => n === E.WATER || n === E.BRINE) && R() < 0.008) {
       w.el[i] = E.PEAT; // a marsh kept wet goes boggy — succession, not teleport
     }
-    else if (e === E.MUD && !hasNbr(x, y, n => n === E.WATER || n === E.BRINE) && R() < 0.1) {
-      w.el[i] = E.SOIL; // sun-dried mud sets back to dirt
+    else if (e === E.MUD && !hasNbr(x, y, n => n === E.WATER || n === E.BRINE) && !buriedBy(w, x, y) && R() < 0.1) {
+      w.el[i] = E.SOIL; // sun-dried mud sets back to dirt (buried mud cannot dry)
     }
     else if (e === E.MUD && (t > 400 || hotNbr(w, x, y, 400))) {
       w.el[i] = E.BRICK; w.ev.push(['bake', x, y]); // adobe: baked mud is masonry
@@ -482,6 +638,9 @@ function stepWorld(w) {
     else if (e === E.DRYICE) {
       if (R() < 0.02) { w.el[i] = E.CO2; w.ev.push(['sublime', x, y]); } // skips melting entirely
     }
+    else if (e === E.LIMESTONE && hasNbr(x, y, n => n === E.LAVA)) {
+      w.el[i] = E.MARBLE; w.ev.push(['transmute', x, y]); // contact metamorphism: lava bakes reef rock to marble
+    }
     else if ((e === E.LIMESTONE || e === E.CHALK) && (t > 450 || hotNbr(w, x, y, 450))) {
       w.el[i] = E.LIME; // calcination: a kiln just reaches carbonate heat
     }
@@ -493,14 +652,14 @@ function stepWorld(w) {
       w.ev.push(['hiss', x, y]);
       if (R() < 0.15) w.el[i] = E.EMPTY; // spent into the solution
     }
-    else if (e === E.QUARTZ && hotNbr(w, x, y, 600)) {
-      w.el[i] = E.GLASS; w.ev.push(['glaze', x, y]); // easier fulgurite than sand
+    else if (e === E.QUARTZ && (t > 800 || hotNbr(w, x, y, 800))) {
+      w.el[i] = E.GLASS; w.ev.push(['glaze', x, y]); // pure crystal needs full heat — no fluxes to help
     }
     else if (e === E.WAX && t > 60) {
       w.el[i] = E.OIL; w.ev.push(['melt', x, y]); // phase change before burning
     }
     else if (e === E.COPPERORE && (t > 450 || hotNbr(w, x, y, 450))) {
-      w.el[i] = E.COPPER; w.ev.push(['smelt', x, y]); // a kiln reaches bloomery heat
+      w.el[i] = R() < 0.15 ? E.GOLD : E.COPPER; w.ev.push(['smelt', x, y]); // bonanza ore runs gold
     }
     else if (e === E.METAL && hasNbr(x, y, n => n === E.COAL || n === E.CHARCOAL) &&
              (t > 400 || hotNbr(w, x, y, 400)) && R() < 0.2) {
@@ -534,11 +693,12 @@ function stepWorld(w) {
         }
       }
     }
-    else if (e === E.CHARCOAL && R() < 0.05) {
+    else if (e === E.CHARCOAL && hasNbr(x, y, n => n === E.CHLORINE) && R() < 0.1) {
+      // activated carbon drinks chlorine gas (but never dissolved salt — germs own desalination now)
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy || !inG(x + dx, y + dy)) continue;
         const j = gidx(x + dx, y + dy);
-        if (w.el[j] === E.BRINE) { w.el[j] = E.WATER; w.wet[j] = 1; w.ev.push(['filter', x + dx, y + dy]); break; }
+        if (w.el[j] === E.CHLORINE) { w.el[j] = E.EMPTY; w.ev.push(['filter', x + dx, y + dy]); break; }
       }
     }
     else if (e === E.SALTPETRE && hasNbr(x, y, n => n === E.CHARCOAL) && R() < 0.1) {
@@ -554,9 +714,18 @@ function stepWorld(w) {
       w.age[i] += 1;
       if (w.age[i] > 40) { w.el[i] = E.CONCRETE; w.age[i] = 0; w.ev.push(['cure', x, y]); }
     }
+    else if (e === E.COAL && hasNbr(x, y, n => n === E.LAVA) && R() < 0.5) {
+      w.el[i] = E.DIAMOND; w.ev.push(['transmute', x, y]); // lava-kissed coal flashes to diamond or burns
+    }
+    else if (e === E.COAL && (t > 400 || hotNbr(w, x, y, 400)) && R() < 0.01 && buriedBy(w, x, y)) {
+      w.el[i] = E.DIAMOND; w.ev.push(['transmute', x, y]); // burial + heat: overburden pressure, the honest half
+    }
+    else if (e === E.COAL && (t > 600 || hotNbr(w, x, y, 600)) && R() < 0.05) {
+      w.el[i] = E.DIAMOND; w.ev.push(['transmute', x, y]); // white-hot coal rearranges into diamond
+    }
     else if (e === E.COAL && (t > 300 || hotNbr(w, x, y, 300) ||
-             hasNbr(x, y, n => n === E.FIRE || n === E.LAVA))) {
-      w.el[i] = E.FIRE; w.wet[i] = 0; w.ev.push(['ignite', x, y]); // high ignition point, then burns
+             hasNbr(x, y, n => n === E.FIRE || n === E.LAVA)) && !buriedBy(w, x, y)) {
+      w.el[i] = E.FIRE; w.wet[i] = 0; w.ev.push(['ignite', x, y]); // buried coal is starved of air
     }
     else if (e === E.FOAM) {
       if (hasNbr(x, y, n => n === E.FIRE)) {
@@ -643,7 +812,8 @@ function stepWorld(w) {
           if (n === E.TNT) { explode(w, x + dx, y + dy, 8); continue; }
           if ((n === E.WOOD || n === E.OIL || n === E.SULFUR || n === E.PEAT || n === E.WAX ||
                n === E.PAPER || n === E.SAWDUST || n === E.RUBBER || n === E.CHARCOAL || n === E.COAL ||
-               n === E.AMBER || n === E.PHOSPHORUS) && air && R() < 0.3 && !hasNbr(x + dx, y + dy, m => m === E.FOAM)) {
+               n === E.AMBER || n === E.PHOSPHORUS || n === E.SUGAR || n === E.MEAT || n === E.SAP ||
+               n === E.SHALE) && air && R() < 0.3 && !hasNbr(x + dx, y + dy, m => m === E.FOAM)) {
             w.el[j] = E.FIRE; w.wet[j] = 0; w.ev.push(['ignite', x + dx, y + dy]); // foam-coated fuel will not catch
           }
         }
@@ -675,13 +845,87 @@ function stepWorld(w) {
     else if (e === E.SALT && hasNbr(x, y, n => n === E.WATER)) {
       w.el[i] = E.BRINE; w.wet[i] = 1; w.ev.push(['dissolve', x, y]);
     }
+    else if (e === E.SUGAR && hasNbr(x, y, n => n === E.WATER || n === E.BRINE) && R() < 0.1) {
+      w.el[i] = E.EMPTY; // sweet water: dissolves silent, feeds whoever finds it first
+    }
+    else if (e === E.MEAT && R() < 0.005) {
+      w.el[i] = E.SOIL; w.ev.push(['rot', x, y]); // carrion composts where it lies
+    }
+    else if (e === E.MUD && buriedBy(w, x, y) && R() < 0.02) {
+      w.el[i] = E.SHALE; w.ev.push(['set', x, y]); // burial lithifies mud into shale
+    }
+    else if (e === E.SHALE && (t > 400 || hotNbr(w, x, y, 400)) && R() < 0.1) {
+      w.el[i] = E.OIL; w.wet[i] = 0; w.ev.push(['crack', x, y]); // retorting: heat cracks kerogen to oil
+    }
+    else if (e === E.BONE && buriedBy(w, x, y) && R() < 0.003) {
+      w.el[i] = E.FOSSIL; w.ev.push(['set', x, y]); // mineralised in the dark, minus the eons
+    }
+    else if (e === E.SAP && R() < 0.002) {
+      w.el[i] = E.AMBER; // resin fossilises where it falls
+    }
+    else if (e === E.SAP && hasNbr(x, y, n => n === E.WATER || n === E.BRINE) && R() < 0.1) {
+      w.el[i] = E.EMPTY; // sweet sap dissolves silent
+    }
+    else if (e === E.WIRE && t > 600) {
+      w.el[i] = E.COPPER; // overloaded wire melts back into a copper blob
+    }
+    else if (e === E.BATTERY) {
+      w.pt[i] += (80 - w.pt[i]) * 0.3; // a power cell runs warm; wire carries it away
+      if (hasNbr(x, y, n => n === E.WATER || n === E.BRINE || n === E.FOAM) && R() < 0.2) {
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+          const j = gidx(x + dx, y + dy);
+          if ((w.el[j] === E.WATER || w.el[j] === E.BRINE || w.el[j] === E.FOAM) && R() < 0.5) {
+            w.el[j] = E.STEAM; w.wet[j] = 0; w.ev.push(['zap', x + dx, y + dy]); break;
+          }
+        }
+      } else if (hasNbr(x, y, n => n === E.WOOD || n === E.OIL || n === E.PAPER || n === E.SAWDUST ||
+          n === E.COAL || n === E.SUGAR || n === E.MEAT) && R() < 0.05) {
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+          const j = gidx(x + dx, y + dy);
+          if (w.el[j] === E.WOOD || w.el[j] === E.OIL || w.el[j] === E.PAPER || w.el[j] === E.SAWDUST ||
+              w.el[j] === E.COAL || w.el[j] === E.SUGAR || w.el[j] === E.MEAT) {
+            w.el[j] = E.FIRE; w.wet[j] = 0; w.ev.push(['zap', x + dx, y + dy]); break;
+          }
+        }
+      } else if (hasNbr(x, y, n => n === E.FIRE || n === E.LAVA || n === E.SUN) && R() < 0.1) {
+        explode(w, x, y, 3); w.ev.push(['zap', x, y]); // cooked cells vent with flame
+      }
+    }
+    else if (e === E.VOID) {
+      // unmatter: deletes neighbours, spares its fellow tools (wall, void, clone)
+      let ate = false;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const j = gidx(x + dx, y + dy), n = w.el[j];
+        if (n === E.EMPTY || n === E.WALL || n === E.VOID || n === E.CLONE) continue;
+        w.el[j] = E.EMPTY; w.life[j] = 0; w.lifeAmt[j] = 0; w.tech[j] = 0; w.wet[j] = 0; ate = true;
+      }
+      if (ate) w.ev.push(['unmake', x, y]);
+    }
+    else if (e === E.CLONE && R() < 0.5) {
+      // duplicates whatever touches it into empty neighbours — Sandboxels' favourite accident
+      let src = 0;
+      const voids = [];
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const j = gidx(x + dx, y + dy), n = w.el[j];
+        if (n === E.EMPTY) voids.push(j);
+        else if (n !== E.CLONE && n !== E.VOID && !src && R() < 0.5) src = n;
+      }
+      if (src && voids.length) {
+        const j = voids[(R() * voids.length) | 0];
+        w.el[j] = src; w.age[j] = 0; w.wet[j] = (src === E.WATER || src === E.BRINE) ? 1 : 0;
+      }
+    }
     else if (e === E.ACID) {
       // eats rock/dirt/sand, neutralised by soil
       for (let dy = -1; dy <= 1 && w.el[i] === E.ACID; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy || !inG(x + dx, y + dy)) continue;
         const j = gidx(x + dx, y + dy), n = w.el[j];
         if (n === E.SOIL && R() < 0.2) { w.el[i] = E.EMPTY; w.ev.push(['fizz', x, y]); break; }
-        if ((n === E.LIMESTONE || n === E.CHALK) && R() < 0.3) {
+        if ((n === E.LIMESTONE || n === E.CHALK || n === E.MARBLE) && R() < 0.3) {
           w.el[j] = E.EMPTY; // carbonates fizz hard in acid
           if (R() < 0.3) w.el[i] = E.SMOKE;
           w.ev.push(['fizz', x + dx, y + dy]);
@@ -694,6 +938,9 @@ function stepWorld(w) {
         if (n === E.COPPER && R() < 0.05) {
           w.el[j] = E.EMPTY; w.ev.push(['fizz', x + dx, y + dy]); // etched away
         }
+        if (n === E.STEEL && R() < 0.05) {
+          w.el[j] = E.EMPTY; w.ev.push(['fizz', x + dx, y + dy]); // bloomery steel still fears acid
+        }
       }
     }
     else if (e === E.LAVA) {
@@ -705,7 +952,8 @@ function stepWorld(w) {
           w.el[j] = E.STEAM; quenched = true; w.ev.push(['burst', x + dx, y + dy]);
         }
         if ((n === E.WOOD || n === E.OIL || n === E.SULFUR || n === E.PEAT || n === E.HYDROGEN || n === E.METHANE ||
-             n === E.WAX || n === E.PAPER || n === E.SAWDUST || n === E.RUBBER || n === E.CHARCOAL || n === E.AMBER) && R() < 0.4) {
+             n === E.WAX || n === E.PAPER || n === E.SAWDUST || n === E.RUBBER || n === E.CHARCOAL || n === E.AMBER ||
+             n === E.SUGAR || n === E.MEAT || n === E.SAP || n === E.SHALE) && R() < 0.4) {
           w.el[j] = E.FIRE; w.wet[j] = 0; w.ev.push(['ignite', x + dx, y + dy]);
         }
       }
@@ -800,8 +1048,10 @@ function stepWorld(w) {
 function stepLife(w, T, dl) {
   const R = w.rng;
   let germs = 0, germTiles = 0, moss = 0, grass = 0, algae = 0, fungus = 0, lichen = 0, locusts = 0, salt = 0, acid = 0, water = 0, detox = 0, brick = 0, co2 = 0, glass = 0, lime = 0, limestone = 0;
-  let vent = 0, wood = 0, soil = 0;
+  let vent = 0, wood = 0, soil = 0, sugar = 0, meat = 0, gold = 0, marble = 0, diamond = 0, steel = 0;
   let coral = 0, cactus = 0, sponge = 0, fern = 0, worms = 0, termites = 0;
+  let virus = 0, fish = 0, bird = 0, ant = 0, tree = 0;
+  let mushroom = 0, kelp = 0, flower = 0, bee = 0, shale = 0, sap = 0, fossil = 0, oil = 0;
   for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
     const i = gidx(x, y), e = w.el[i], L = w.life[i];
     if (e === E.SALT) salt++;
@@ -815,6 +1065,16 @@ function stepLife(w, T, dl) {
     if (e === E.VENT) vent++;
     if (e === E.WOOD) wood++;
     if (e === E.SOIL) soil++;
+    if (e === E.SUGAR) sugar++;
+    if (e === E.MEAT) meat++;
+    if (e === E.GOLD) gold++;
+    if (e === E.MARBLE) marble++;
+    if (e === E.DIAMOND) diamond++;
+    if (e === E.STEEL) steel++;
+    if (e === E.SHALE) shale++;
+    if (e === E.SAP) sap++;
+    if (e === E.FOSSIL) fossil++;
+    if (e === E.OIL) oil++;
     if (!L) continue;
     const dome = isDome(w, x, y);
     const t = w.pt[i];
@@ -1075,6 +1335,257 @@ function stepLife(w, T, dl) {
           }
         }
       }
+    } else if (L === LIFE.VIRUS) {
+      // hijacker: converts neighbouring germs, dies in UV, heat or loneliness
+      let germNear = false;
+      for (let dy = -1; dy <= 1 && !germNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.GERMS) { germNear = true; break; }
+      }
+      if (!germNear || t < -10 || t > 45 || R() < uv * 0.5) {
+        if (R() < 0.3) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        virus++;
+        if (R() < 0.35) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if (w.life[j] === LIFE.GERMS && R() < 0.4) {
+              w.life[j] = LIFE.VIRUS; w.lifeAmt[j] = 3; w.ev.push(['sicken', x + dx, y + dy]); break;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.FISH) {
+      // grazer: needs open water, mild temps, algae to eat and clean neighbours
+      const fsea = (e === E.WATER || e === E.BRINE);
+      let fed = false;
+      for (let dy = -1; dy <= 1 && !fed; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const j = gidx(x + dx, y + dy);
+        if (w.life[j] === LIFE.ALGAE) {
+          fed = true;
+          if (R() < 0.3) { w.life[j] = 0; w.lifeAmt[j] = 0; w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 4); w.ev.push(['hunt', x + dx, y + dy]); }
+          break;
+        }
+      }
+      if (!fsea || t < 0 || t > 35 || hasNbrW(w, x, y, n => n === E.ACID || n === E.CHLORINE)) {
+        if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        fish++;
+        if (!fed && R() < 0.05) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+        if (fed && R() < 0.2) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.WATER || w.el[j] === E.BRINE) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.FISH; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.BIRD) {
+      // kestrel: patrols the air, takes locusts, starves without game
+      let game = false;
+      for (let dy = -1; dy <= 1 && !game; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.LOCUSTS) { game = true; break; }
+      }
+      if (e === E.WATER || e === E.BRINE || e === E.LAVA || e === E.ACID || !airAt(w, x, y) || t < 0 || t > 40) {
+        if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        bird++;
+        if (game && R() < 0.4) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if (w.life[j] === LIFE.LOCUSTS && R() < 0.5) {
+              w.life[j] = 0; w.lifeAmt[j] = 0; w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 4); w.ev.push(['hunt', x + dx, y + dy]); break;
+            }
+          }
+        }
+        if (!game && R() < 0.2) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+        if (game && R() < 0.15) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if (w.el[j] !== E.WATER && w.el[j] !== E.BRINE && w.el[j] !== E.LAVA && w.el[j] !== E.ACID && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.BIRD; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.ANT) {
+      // foragers: haul sugar, meat and seeds home, nest in soil
+      const ahost = (e === E.SOIL || e === E.FERTILIZER || e === E.SAND);
+      let forage = false;
+      for (let dy = -1; dy <= 1 && !forage; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const n = w.el[gidx(x + dx, y + dy)];
+        if (n === E.SUGAR || n === E.MEAT || n === E.SEED) { forage = true; break; }
+      }
+      if (!ahost || t < 5 || t > 40) {
+        if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        ant++;
+        if (forage && R() < 0.4) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy), n = w.el[j];
+            if ((n === E.SUGAR || n === E.MEAT || n === E.SEED) && R() < 0.4) {
+              w.el[j] = E.EMPTY; w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 3); w.ev.push(['hunt', x + dx, y + dy]); break;
+            }
+          }
+        }
+        if (!forage && R() < 0.1) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+        if (R() < 0.15) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.SOIL || w.el[j] === E.FERTILIZER || w.el[j] === E.SAND) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.ANT; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.TREE) {
+      // forest giant: roots in damp soil, drops seeds, outlives the gardener
+      const thost = (e === E.SOIL || e === E.FERTILIZER);
+      if (!thost || w.wet[i] < 0.3 || t < 0 || t > 35) {
+        if (R() < 0.3) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        tree++;
+        w.lifeAmt[i] = Math.min(60, w.lifeAmt[i] + 0.4);
+        if (w.lifeAmt[i] >= 30 && R() < 0.02) { // old trees weep resin onto bare ground
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy), n = w.el[j];
+            if (!w.life[j] && (n === E.SOIL || n === E.FERTILIZER || n === E.ROCK || n === E.REGOLITH ||
+                n === E.SAND || n === E.WOOD) && R() < 0.3) { w.el[j] = E.SAP; w.age[j] = 0; break; }
+          }
+        }
+        if (R() < 0.05) { // seed rain on bare damp soil
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.SOIL || w.el[j] === E.FERTILIZER) && w.wet[j] > 0.3 && !w.life[j] && R() < 0.3) {
+              w.el[j] = E.SEED; w.ev.push(['sprout', x + dx, y + dy]); break;
+            }
+          }
+        }
+        if (w.lifeAmt[i] >= 30 && R() < 0.05) { // saplings at the roots
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.SOIL || w.el[j] === E.FERTILIZER) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.TREE; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.MUSHROOM) {
+      // fruiting body: rises from damp rot where fungus already holds, fears daylight
+      const mhost = (e === E.WOOD || e === E.ASH || e === E.SOIL || e === E.FERTILIZER || e === E.COMPOST);
+      let rotNear = false;
+      for (let dy = -1; dy <= 1 && !rotNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.FUNGUS) { rotNear = true; break; }
+      }
+      const dark = techNear(w, x, y, TECH.SHADE, 5) || dl < 0.3; // shade cloth or night, like ferns
+      if (!mhost || !rotNear || w.wet[i] < 0.4 || t < 0 || t > 35 || !dark) {
+        if (R() < 0.3) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        mushroom++;
+        w.lifeAmt[i] = Math.min(30, w.lifeAmt[i] + 0.3);
+        if (R() < 0.08) { // spore drop on nearby damp rot
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy), n = w.el[j];
+            if ((n === E.WOOD || n === E.ASH || n === E.SOIL || n === E.FERTILIZER || n === E.COMPOST) &&
+                w.wet[j] > 0.4 && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.MUSHROOM; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.KELP) {
+      // underwater forest: roots in open water, drinks daylight, grazed like algae
+      const ksea = (e === E.WATER || e === E.BRINE);
+      if (!ksea || t < 0 || t > 30 || hasNbrW(w, x, y, n => n === E.ACID || n === E.CHLORINE)) {
+        if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        kelp++;
+        w.lifeAmt[i] = Math.min(50, w.lifeAmt[i] + 0.3);
+        if (dl >= 0.25 && R() < 0.2) { // forests grow by day, persist by night
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.WATER || w.el[j] === E.BRINE) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.KELP; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.FLOWER) {
+      // bloomer: cold-hardy perennial - roots persist nights and frost, blooms need damp soil, warmth and daylight
+      const fhost = (e === E.SOIL || e === E.FERTILIZER);
+      if (!fhost || w.wet[i] < 0.3) {
+        if (R() < 0.3) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else if (t < 0 || t > 35) {
+        flower++; // dormant: alive, waiting out the cold or heat
+      } else {
+        flower++;
+        w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 0.3);
+        if (dl >= 0.25 && R() < 0.08) { // blooms open by day
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.SOIL || w.el[j] === E.FERTILIZER) && w.wet[j] > 0.3 && !w.life[j] && R() < 0.3) {
+              w.el[j] = E.SEED; w.ev.push(['sprout', x + dx, y + dy]); break;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.BEE) {
+      // pollinator: works flowers, carries seeds in the bargain, starves without blooms
+      let bloomNear = false;
+      for (let dy = -1; dy <= 1 && !bloomNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.FLOWER) { bloomNear = true; break; }
+      }
+      if (!bloomNear || t < 0 || t > 40 || R() < uv * 0.3) {
+        if (R() < 0.3) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        bee++;
+        if (R() < 0.3) { // harvest: nectar for the hive, seeds for the meadow
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if (w.life[j] === LIFE.FLOWER && R() < 0.4) {
+              w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 4); w.ev.push(['bloom', x + dx, y + dy]);
+              for (let ey = -1; ey <= 1; ey++) for (let ex = -1; ex <= 1; ex++) {
+                const kx = x + dx + ex, ky = y + dy + ey;
+                if (!inG(kx, ky)) continue;
+                const k = gidx(kx, ky);
+                if ((w.el[k] === E.SOIL || w.el[k] === E.FERTILIZER) && w.wet[k] > 0.3 && !w.life[k] && R() < 0.2) {
+                  w.el[k] = E.SEED;
+                }
+              }
+              break;
+            }
+          }
+        }
+        if (w.lifeAmt[i] >= 20 && R() < 0.1) { // the hive swarms
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if (w.el[j] !== E.WATER && w.el[j] !== E.BRINE && w.el[j] !== E.LAVA && w.el[j] !== E.ACID &&
+                !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.BEE; w.lifeAmt[j] = 3; w.lifeAmt[i] = 8;
+            }
+          }
+        }
+      }
     } else if (L === LIFE.GRASS) {
       const gsoil = (w.el[i] === E.SOIL || w.el[i] === E.FERTILIZER);
       if (!airAt(w, x, y) || !gsoil || w.wet[i] < 0.35 || t < 0 || t > 40) {
@@ -1096,7 +1607,8 @@ function stepLife(w, T, dl) {
   // cumulative selection for brine-eaters
   if (detox > 0) w.reducer = Math.min(1, w.reducer * 0.9995 + detox * 0.005);
   // ecosystem score: Shannon diversity over lifeform tile counts (the ABM's own index, grown up)
-  const tiles = [germTiles, moss, grass, algae, fungus, lichen, locusts, coral, cactus, sponge, fern, worms, termites];
+  const tiles = [germTiles, moss, grass, algae, fungus, lichen, locusts, coral, cactus, sponge, fern, worms, termites,
+    virus, fish, bird, ant, tree, mushroom, kelp, flower, bee];
   const pop = tiles.reduce((a, b) => a + b, 0);
   let ecoH = 0, richness = 0;
   for (const n of tiles) {
@@ -1106,7 +1618,8 @@ function stepLife(w, T, dl) {
     ecoH -= p * Math.log(p);
   }
   w.counts = { germs: Math.round(germs), moss, grass, algae, fungus, lichen, locusts, salt, acid, water, brick, co2, glass, lime, limestone,
-    coral, cactus, sponge, fern, worms, termites, vent, wood, soil,
+    coral, cactus, sponge, fern, worms, termites, vent, wood, soil, virus, fish, bird, ant, tree, sugar, meat,
+    gold, marble, diamond, steel, mushroom, kelp, flower, bee, shale, sap, fossil, oil,
     ecoH: Math.round(ecoH * 1000) / 1000, richness, biomass: pop };
 }
 
@@ -1165,6 +1678,32 @@ const QUESTS = [
     done: (w, c) => c.water >= 70 && c.vent > 0, guide: 'Salt a vent pool into brine — fresh water boils past 60° in vacuum. Dig a rock basin so it stays put.' },
   { id: 'H6', world: 'hadean', name: 'Genesis', goal: 'raise 100 germs from a vent pool',
     done: (w, c) => c.germs >= 100, guide: 'Tend a salted vent pool under a dome and wait — the water seeds germs by itself. Grow them to a hundred.' },
+  { id: 'T1', world: 'titan', name: 'Oasis', goal: 'hold 20 liquid water',
+    done: (w, c) => c.water >= 20, guide: 'Five heaters over the ice bedrock hold a pool at −180° ambient — meltwater is precious here too.' },
+  { id: 'T2', world: 'titan', name: 'Hothouse', goal: 'grow 40 moss',
+    done: (w, c) => c.moss >= 40, guide: 'Dome + heaters + sprinkler over imported soil: a hothouse on an ice moon. Nothing grows unheated.' },
+  { id: 'T3', world: 'titan', name: 'Sun glass', goal: 'vitrify 15 sand with pinned suns',
+    done: (w, c) => c.glass >= 15, guide: 'No lava on Titan — pin a cluster of suns over the dunes instead. Import sand if the dunes drift thin.' },
+  { id: 'T4', world: 'titan', name: 'Nuggets', goal: 'smelt 5 gold from ore',
+    done: (w, c) => c.gold >= 5, guide: 'Paint copper ore by the kiln: bonanza veins run gold about one time in seven.' },
+  { id: 'V1', world: 'venus', name: 'Volcanic glass', goal: 'vitrify 20 sand at lava fields',
+    done: (w, c) => c.glass >= 20, guide: 'Bank dune sand against the lava fields — the planet is halfway to a kiln already.' },
+  { id: 'V2', world: 'venus', name: 'Marble works', goal: 'bake 10 limestone into marble',
+    done: (w, c) => c.marble >= 10, guide: 'Paint limestone touching lava: contact metamorphism on a world that never cools.' },
+  { id: 'V3', world: 'venus', name: 'Diamond forge', goal: 'press 5 diamonds from coal',
+    done: (w, c) => c.diamond >= 5, guide: 'Coal against lava, white-hot: the forge planet makes gems the slow way.' },
+  { id: 'V4', world: 'venus', name: 'Steel works', goal: 'smelt 20 steel',
+    done: (w, c) => c.steel >= 20, guide: 'Lay metal on charcoal (coal self-immolates at 460°): ambient heat already beats bloomery heat. Venus is a free kiln.' },
+  { id: 'E10', world: 'earth', name: 'Fish pond', goal: 'keep 8 fish in an algae pool',
+    done: (w, c) => c.fish >= 8, guide: 'Water, daylight, algae first — then fish. Grazers need a stocked pool, not an empty one.' },
+  { id: 'E11', world: 'earth', name: 'Gilded copies', goal: 'copy one gold seed into 8',
+    done: (w, c) => c.gold >= 8, guide: 'Clear a patch, paint one gold beside one clone: the ring fills itself. Chain more clones to go bigger.' },
+  { id: 'E12', world: 'earth', name: 'Flower bed', goal: 'bloom 20 flowers',
+    done: (w, c) => c.flower >= 20, guide: 'Wet soil, daylight, then flowers by the dozen — they persist the night but only seed by day.' },
+  { id: 'E13', world: 'earth', name: 'Shale oil', goal: 'crack 10 oil from shale',
+    done: (w, c) => c.oil >= 10, guide: 'Bury mud under sand, wait for shale, then kiln it past 400°: kerogen cracks to oil.' },
+  { id: 'H7', world: 'hadean', name: 'Diamond core', goal: 'press 3 diamonds at a vent',
+    done: (w, c) => c.diamond >= 3, guide: 'Coal against a lava vent: Hadean heat does the pressing. Mind the quench steam.' },
 ];
 
 function checkQuests(w, day) {
@@ -1190,5 +1729,5 @@ function checkQuests(w, day) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { E, LIFE, TECH, WORLDS, GW, GH, gidx, createWorld, paint, stepWorld, worldTemp, QUESTS };
+  module.exports = { E, LIFE, TECH, WORLDS, GW, GH, gidx, createWorld, paint, stepWorld, worldTemp, QUESTS, habitability, habitExplain };
 }

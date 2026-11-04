@@ -242,5 +242,128 @@ const done = (w, id) => S.QUESTS.find(q => q.id === id).done(w, w.counts);
   for (let k = 0; k < 8; k++) { step(w, 5); best = Math.max(best, w.counts.coral); }
   ok('E8 Reef completes', best >= 25, 'best coral=' + best);
 }
+// T1 Oasis: five heaters hold a pool on Titan bedrock
+{
+  const w = S.createWorld('titan', 801);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 1);
+  step(w, 100);
+  ok('T1 Oasis completes', done(w, 'T1'), 'water=' + w.counts.water);
+}
+// T2 Hothouse: dome + heaters + sprinkler over imported soil
+{
+  const w = S.createWorld('titan', 802);
+  S.paint(w, 'base', E.SOIL, 32, 25, 5);
+  S.paint(w, 'tech', TECH.DOME, 32, 25, 0);
+  S.paint(w, 'tech', TECH.HEATER, 30, 25, 0);
+  S.paint(w, 'tech', TECH.HEATER, 34, 25, 0);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  S.paint(w, 'life', LIFE.MOSS, 32, 25, 3);
+  step(w, 120);
+  ok('T2 Hothouse completes', done(w, 'T2'), 'moss=' + w.counts.moss);
+}
+// T3 Sun glass: a cluster of suns over a big dune
+{
+  const w = S.createWorld('titan', 803);
+  S.paint(w, 'base', E.SAND, 32, 25, 6);
+  S.paint(w, 'base', E.SUN, 32, 25, 2);
+  step(w, 70);
+  ok('T3 Sun glass completes', done(w, 'T3'), 'glass=' + w.counts.glass);
+}
+// T4 Nuggets: kiln over a wide ore disc strikes gold
+{
+  const w = S.createWorld('titan', 804);
+  S.paint(w, 'base', E.COPPERORE, 32, 25, 4);
+  S.paint(w, 'tech', TECH.KILN, 32, 25, 0);
+  step(w, 20);
+  ok('T4 Nuggets completes', done(w, 'T4'), 'gold=' + w.counts.gold);
+}
+// V1 Volcanic glass: sand bed with a lava core poured last
+{
+  const w = S.createWorld('venus', 805);
+  S.paint(w, 'base', E.SAND, 20, 20, 5);
+  S.paint(w, 'base', E.LAVA, 20, 20, 2);
+  step(w, 60);
+  ok('V1 Volcanic glass completes', done(w, 'V1'), 'glass=' + w.counts.glass);
+}
+// V2 Marble works: limestone bed with a lava core poured last
+{
+  const w = S.createWorld('venus', 806);
+  S.paint(w, 'base', E.LIMESTONE, 20, 20, 4);
+  S.paint(w, 'base', E.LAVA, 20, 20, 2);
+  step(w, 30);
+  ok('V2 Marble works completes', done(w, 'V2'), 'marble=' + w.counts.marble);
+}
+// V3 Diamond forge: coal bed with a lava core poured last
+{
+  const w = S.createWorld('venus', 807);
+  S.paint(w, 'base', E.COAL, 20, 20, 5);
+  S.paint(w, 'base', E.LAVA, 20, 20, 2);
+  step(w, 30);
+  ok('V3 Diamond forge completes', done(w, 'V3'), 'diamond=' + w.counts.diamond);
+}
+// V4 Steel works: metal on charcoal, ambient does the firing
+{
+  const w = S.createWorld('venus', 808);
+  S.paint(w, 'base', E.METAL, 20, 20, 4);
+  S.paint(w, 'base', E.CHARCOAL, 20, 20, 3);
+  step(w, 40);
+  ok('V4 Steel works completes', done(w, 'V4'), 'steel=' + w.counts.steel);
+}
+// E10 Fish pond: stocked algae pool at dawn
+{
+  const w = S.createWorld('earth', 809);
+  S.paint(w, 'base', E.WATER, 32, 25, 3); w.sol = 2;
+  S.paint(w, 'life', LIFE.ALGAE, 32, 25, 2);
+  S.paint(w, 'life', LIFE.FISH, 32, 25, 1);
+  step(w, 25);
+  ok('E10 Fish pond completes', done(w, 'E10'), 'fish=' + w.counts.fish);
+}
+// H7 Diamond core: coal bed with a lava core poured last
+{
+  const w = S.createWorld('hadean', 810);
+  S.paint(w, 'base', E.COAL, 20, 20, 4);
+  S.paint(w, 'base', E.LAVA, 20, 20, 2);
+  step(w, 30);
+  ok('H7 Diamond core completes', done(w, 'H7'), 'diamond=' + w.counts.diamond);
+}
+// E11 Gilded copies: one gold seed beside one clone fills the ring
+{
+  const w = S.createWorld('earth', 811);
+  S.paint(w, 'base', E.EMPTY, 32, 25, 3);
+  S.paint(w, 'base', E.GOLD, 32, 25, 0);
+  S.paint(w, 'base', E.CLONE, 33, 25, 0);
+  step(w, 60);
+  ok('E11 Gilded copies completes', done(w, 'E11'), 'gold=' + w.counts.gold);
+}
+// E12 Flower bed: wet soil + daylight; perennials persist the night, seed by day
+{
+  const w = S.createWorld('earth', 812);
+  S.paint(w, 'base', E.SOIL, 32, 25, 5);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  w.sol = 2;
+  S.paint(w, 'life', LIFE.FLOWER, 32, 25, 3);
+  step(w, 60);
+  ok('E12 Flower bed completes', done(w, 'E12'), 'flowers=' + countLife(w, LIFE.FLOWER));
+}
+// E12b Perennial nights: a planted bed survives into the next dawn, not just the day
+{
+  const w = S.createWorld('earth', 813);
+  S.paint(w, 'base', E.SOIL, 32, 25, 4);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  w.sol = 2;
+  S.paint(w, 'life', LIFE.FLOWER, 32, 25, 2);
+  step(w, 30);
+  ok('E12b Flowers persist nights', countLife(w, LIFE.FLOWER) >= 8, 'flowers=' + countLife(w, LIFE.FLOWER));
+}
+// E13 Shale oil: bury mud under sand, kiln the shale past cracking heat
+{
+  const w = S.createWorld('earth', 814);
+  S.paint(w, 'base', E.MUD, 32, 26, 5);
+  S.paint(w, 'base', E.SAND, 32, 23, 5);
+  step(w, 140);
+  S.paint(w, 'tech', TECH.KILN, 32, 25, 1);
+  step(w, 120);
+  ok('E13 Shale oil completes', done(w, 'E13'), 'oil=' + countEl(w, E.OIL));
+}
 console.log(fail ? `\n${fail} QUEST FAILURES (${pass} passed)` : `\nALL ${pass} QUESTS COMPLETABLE`);
 process.exit(fail ? 1 : 0);

@@ -140,18 +140,18 @@ function stepEv(w, n) {
   ok('cement cures (cure)', ev.has('cure') && countEl(w, E.CONCRETE) > 0,
     `concrete=${countEl(w, E.CONCRETE)}`);
 }
-// 10. coal needs real heat; charcoal filters brine; niter+charcoal = gunpowder
+// 10. coal needs real heat; charcoal drinks chlorine (never brine); niter+charcoal = gunpowder
 {
   const w = S.createWorld('earth', 110);
   S.paint(w, 'base', E.COAL, 17, 25, 2);
   S.paint(w, 'base', E.LAVA, 20, 25, 1); // touching: coal catches by contact, not range
-  S.paint(w, 'base', E.BRINE, 35, 28, 3);
+  S.paint(w, 'base', E.CHLORINE, 35, 28, 2);
   S.paint(w, 'base', E.CHARCOAL, 35, 24, 2);
   S.paint(w, 'base', E.SALTPETRE, 50, 28, 2);
   S.paint(w, 'base', E.CHARCOAL, 54, 28, 2);
   const ev = stepEv(w, 120);
   ok('coal ignites on lava (ignite)', ev.has('ignite'), 'no ignite');
-  ok('charcoal filters brine (filter)', ev.has('filter'), 'no filter');
+  ok('charcoal scrubs chlorine (filter)', ev.has('filter'), 'no filter');
   ok('saltpetre+charcoal mixes (mix)', ev.has('mix'), 'no mix');
 }
 // 11. dust settles into clay; hail melts on warm ground; granite shrugs off TNT

@@ -87,10 +87,12 @@ ok('batch-3 ids 69-78', E.BASALT === 69 && E.PERMAFROST === 70 && E.STEEL === 71
   for (let k = 0; k < 120; k++) { S.stepWorld(w); seenMud = Math.max(seenMud, countEl(w, E.MUD)); }
   ok('wet soil goes muddy', seenMud > 0, 'max mud=' + seenMud);
   const v = S.createWorld('moon', 509); // vacuum: no standing water anywhere
-  S.paint(v, 'base', E.MUD, 20, 20, 2);
+  S.paint(v, 'base', E.ROCK, 20, 22, 3); // a level slab, so every mud tile sees open sky
+  for (const x of [16, 18, 20, 22, 24]) S.paint(v, 'base', E.MUD, x, 18, 0);
   step(v, 60);
   ok('mud dries to soil', countEl(v, E.MUD) === 0 && countEl(v, E.SOIL) > 0,
     `mud=${countEl(v, E.MUD)} soil=${countEl(v, E.SOIL)}`);
+  ok('open mud never lithifies', countEl(v, E.SHALE) === 0, 'shale=' + countEl(v, E.SHALE));
 }
 // 8. hot vent water lays silica on sand
 {

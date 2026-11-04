@@ -56,12 +56,12 @@ const same = V(`JSON.stringify(shareDecode(shareEncode()).el) === JSON.stringify
 ok('share round-trips matter byte-exact', same === true, 'el mismatch');
 const w0 = V('world.sol');
 V(`world = unpackWorld(shareDecode(shareEncode()))`);
-ok('shared yard unpacks smeared but sane', V('world.sol') === w0 + 1 && V('world.id') === 'mars' && !!V('world.counts'),
+ok('shared yard unpacks smeared but sane', V('world.sol') === w0 + 1 && V('world.id') === 'earth' && !!V('world.counts'),
   `sol ${V('world.sol')} id ${V('world.id')}`);
 // census CSV carries the metrics
 const csv = V('censusCSV()');
 ok('census header + metrics', csv.startsWith('metric,value') && csv.includes('\ngerms,') && csv.includes('\nsol,')
-  && csv.includes('\necoH,') && csv.includes('\nworld,mars'), csv.split('\n').slice(0, 3).join('|'));
+  && csv.includes('\necoH,') && csv.includes('\nworld,earth'), csv.split('\n').slice(0, 3).join('|'));
 // weekly challenge: deterministic, world- and week-sensitive, ISO-shaped
 const a = V(`challengeSeed('mars', '2026-W45')`);
 ok('challenge seed deterministic', a === V(`challengeSeed('mars', '2026-W45')`), a);
