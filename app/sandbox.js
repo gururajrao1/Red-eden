@@ -356,6 +356,125 @@ const ELNAME = ['empty', 'regolith', 'rock', 'sand', 'soil', 'ice', 'salt (perch
 const LIFENAME = ['no life', 'germs', 'moss', 'grass', 'algae', 'fungus', 'lichen', 'locusts',
   'coral', 'cactus', 'sponge', 'fern', 'worms', 'termites', 'virus', 'fish', 'bird', 'ant', 'tree',
   'mushroom', 'kelp', 'flower', 'bee'];
+/* The readout never hides at the bottom: hover any tile for its story plus one
+   experiment to try, while the clue strip above the yard rotates live guidance —
+   next problem, planting needs, undiscovered reactions, RP progress. */
+const TRYTHIS = {
+  base: {
+    1: 'wet it into clay, or bake clay nearby for brick country',
+    2: 'only acid argues with rock — pour some and watch the fizz',
+    3: 'heat past 800° for glass (sun, lava, heat ray); wet it and it sets into sandstone',
+    4: 'water it damp, then plant grass or moss — dry-planted life withers',
+    5: 'melt it with a heater (or sun) and bank the pool before night',
+    6: 'add water for brine, then seed germs — they detox it and evolve',
+    7: 'hot water steams, cold water ices — park some beside lava and some beside cryo',
+    8: 'germs eat brine and leave fresh water; moss domes love it',
+    9: 'bury it in soil to neutralise — or watch it fizz through limestone',
+    10: 'pour it on ice for obsidian, on water for a quench blast, on sand for glass',
+    13: 'needs fuel + heat + air — try it in a dome on the Moon vs open ground',
+    14: 'fuel for the triangle; dead wood plus damp plus fungus becomes soil',
+    15: 'floats on water and burns long — then try foam on the flames',
+    16: 'wet ash sweetens into soil — potash, the oldest fertiliser',
+    17: 'chill it into rain over a field — clouds water crops',
+    18: 'melts above 0°C — a slow-release reservoir for spring planting',
+    19: 'acid cannot touch glass — build spill channels from it',
+    26: 'a pinned 1500° star — vitrify sand, calcine limestone, fire clay',
+    28: 'bake past 400° (fire, lava, kiln) into brick — pottery is the first chemistry',
+    34: 'heat it wet and it breathes SO2 — nearby water turns to acid rain',
+    35: 'dissolve it near moss or grass and watch them spread faster',
+    47: 'pour it, wait ~40 sols — concrete shrugs off TNT next door',
+    49: 'needs real heat to catch, then burns long; bury it hot under rock for diamond',
+    54: 'burn it in a kiln for quicklime — then add water and stand back',
+    55: 'slakes violently in water — Rome mixed mortar exactly this way',
+    62: 'smelt it in a kiln for copper — the Chalcolithic in one tile',
+    65: 'drop it on wet soil and watch agriculture happen',
+    68: 'holds 90° inside any ice — melt pools and white smokers grow here',
+    76: 'wet soil goes muddy — bake mud for adobe, or let it go peaty',
+    82: 'runs warm, boils what it touches — wire carries the warmth downhill',
+  },
+  life: {
+    1: 'feed them brine and watch the reducer % evolve upward',
+    2: 'pioneer plant — spread it over wet ground, then follow with grass',
+    3: 'needs soil + air + damp + mild — scatter seed on wet dirt instead of painting',
+    4: 'grows in sunlit water on its own — the oxygen story starts here',
+    5: 'give it damp dead wood and no light — it pays you back in soil',
+    6: 'colonises bare rock in the light — first green on dead worlds',
+    8: 'warm lit shallows only — it lays limestone reef below itself',
+    18: 'drops seeds on damp soil — plant one tree, get a meadow',
+    21: 'blooms open by day — bees will work them and stash honey',
+    22: 'needs flowers nearby — honey feeds hives through winter',
+    27: 'exhales oxygen in daylight pools — the GOE in a puddle',
+    28: 'needs cyano or algae beside it in sunlit water — then it lays reef',
+  },
+};
+const EXPERIMENTS = [ // rotating yard ideas; w:null means every world
+  { w: null, t: 'pour lava on ice — fast quench makes obsidian, slow cooling makes basalt' },
+  { w: null, t: 'wet ash into soil, then plant moss on it' },
+  { w: null, t: 'dissolve salt in water, then seed germs in the brine' },
+  { w: null, t: 'bake clay past 400° and start a brick channel' },
+  { w: null, t: 'drop a seed on damp soil and watch it become grass' },
+  { w: null, t: 'mix niter with charcoal, add a spark, stand back' },
+  { w: ['earth', 'hadean', 'venus'], t: 'heat wet sulfur and watch nearby water turn to acid rain' },
+  { w: ['earth', 'moon'], t: 'burn limestone in a kiln, then slake the quicklime with water' },
+  { w: ['earth', 'mars'], t: 'smelt green copper ore in a kiln and strike copper' },
+  { w: ['earth', 'mars', 'archaean'], t: 'rot damp dead wood with fungus and bank the compost soil' },
+  { w: ['europa', 'moon', 'mars'], t: 'bank ice overnight, melt it at dawn — water savings' },
+  { w: ['europa'], t: 'paint a vent in the ice and watch a warm pool hold 90°' },
+  { w: ['archaean'], t: 'seed cyano in a sunlit pool and watch oxygen climb toward the GOE' },
+  { w: ['titan'], t: 'pour water under methane skies and watch it freeze like rock' },
+  { w: ['io'], t: 'pour lava wide and count tiles with the census before the crust sets' },
+  { w: ['hadean'], t: 'bank sand against a lava vent and vitrify a glass shore' },
+  { w: ['venus'], t: 'press coal under rock in kiln heat and strike diamond' },
+  { w: ['mars'], t: 'grow lichen on bare rock in the light — pioneer green' },
+  { w: null, t: 'pool CO2 in a pit and strike a match above it' },
+  { w: null, t: 'build a concrete wall, then test it with TNT' },
+];
+let clueIdx = 0, ideaIdx = 0, lastClue = 0;
+function experimentIdea() {
+  try {
+    const fit = EXPERIMENTS.filter(e => !e.w || e.w.includes(world.id));
+    if (!fit.length) return EXPERIMENTS[0].t;
+    ideaIdx = (ideaIdx + 1) % fit.length;
+    return fit[ideaIdx].t;
+  } catch (e) { return EXPERIMENTS[0].t; }
+}
+function cluePool() {
+  const pool = [];
+  try {
+    const q = QUESTS.find(q => q.world === world.id && !world.quests[q.id]);
+    if (q) {
+      let g = q.guide;
+      try {
+        if (typeof PROG !== 'undefined' && PROG[q.id]) g += ' — ' + PROG[q.id](world, world.counts || {});
+      } catch (e) {}
+      pool.push(`<b>★ NEXT ${q.id} · ${q.name}</b> — ${g}`);
+    } else pool.push('<b>This world is solved.</b> Replay for faster bests, or spend RP on the next world.');
+  } catch (e) {}
+  try {
+    if (typeof tool !== 'undefined' && tool && tool.kind === 'life' && NEEDS[tool.id])
+      pool.push(`<b>Planting ${LIFENAME[tool.id]}?</b> It needs ${NEEDS[tool.id]} — hover the ground to check each need live.`);
+  } catch (e) {}
+  try {
+    const left = Object.keys(SCIENCE).length - Object.keys(SCIENCE).filter(k => journal[k]).length;
+    pool.push(left > 0
+      ? `<b>${left} reactions still undiscovered.</b> Try this: ${experimentIdea()}.`
+      : '<b>Every known reaction logged.</b> Field scientist! Weekly challenges still pay.');
+  } catch (e) {}
+  try {
+    const nx = Object.entries(UNLOCK_RP).find(([id, need]) => getRP() < need);
+    if (nx) pool.push(`<b>${nx[0]} unlocks at ${nx[1]} RP</b> (you hold ${getRP()}) — problems pay ~100, first-seen reactions pay 10.`);
+  } catch (e) {}
+  pool.push(`<b>${WORLDS[world.id].name}:</b> ${ENV_BLURB[world.id]}`);
+  return pool;
+}
+function updateClue() {
+  try {
+    const pool = cluePool();
+    if (!pool.length) return;
+    clueIdx = (clueIdx + 1) % pool.length;
+    $('clue').innerHTML = pool[clueIdx];
+  } catch (e) {}
+}
 function inspect(x, y) {
   if (!inGb(x, y)) return;
   const i = gidx(x, y);
@@ -372,6 +491,8 @@ function inspect(x, y) {
     (p.kind === 'base' && p.id === world.el[i]) ||
     (p.kind === 'life' && p.id === world.life[i]));
   html += `<br><span class="sci">${meta ? meta.sci : 'Bare vacuum-ready ground.'}</span>`;
+  const tryThis = TRYTHIS.base[world.el[i]] || (world.life[i] && TRYTHIS.life[world.life[i]]);
+  if (tryThis) html += `<br><span class="ref">try this: ${tryThis}</span>`;
   if (typeof tool !== 'undefined' && tool && tool.kind === 'life' && typeof habitability !== 'undefined') {
     const checks = habitability(world, x, y, tool.id);
     if (checks.length) {
@@ -1239,6 +1360,7 @@ function showTool(p) {
   $('inspect').innerHTML = `<b>${p.name}</b> · ${p.kind}` +
     `<br><span class="sci">${p.sci}</span>` +
     (p.kind === 'life' && NEEDS[p.id] ? `<br><span class="ref">needs: ${NEEDS[p.id]}</span>` : '');
+  updateClue(); // planting a lifeform puts its needs in the rotation
 }
 // save slots: the whole yard (matter, life, heat, sol, quest state) survives reloads
 function packWorld(w) {
@@ -1375,6 +1497,7 @@ function frame(now) {
       acc += dt * speed;
       while (acc >= 300) { acc -= 300; tick(); }
     }
+    if (now - lastClue > 9000) { lastClue = now; updateClue(); } // the clue strip never goes stale
     draw();
   } finally {
     requestAnimationFrame(frame);
@@ -1426,6 +1549,7 @@ function tick() {
     beep(660, 0.1); beep(880, 0.14, 'square', 0.03, 0.1);
     const q = QUESTS.find(q => q.id === fresh[fresh.length - 1]);
     say(`Problem solved: ${q.name}! ${q.guide}`);
+    updateClue(); // the strip moves on to the next problem immediately
     try {
       const k = 'sandbox_best_' + q.id;
       const b = +(localStorage.getItem(k) || 1e9);
@@ -1465,6 +1589,7 @@ document.querySelectorAll('#envbar [data-world]').forEach(b => {
     particles = [];
     say(ENV_BLURB[b.dataset.world] + ' (Previous yard stashed — Load it back from Auto.)');
     refreshQuests();
+    updateClue(); // new world, new next problem
     beep(440, 0.08);
   };
 });
@@ -1523,5 +1648,5 @@ $('btn-start').onclick = () => {
 started = true; // sandbox paints from the first click; the intro is just a cover
 $('startOverlay').hidden = false;
 
-buildPalette(); refreshQuests(); refreshJournal();
+buildPalette(); refreshQuests(); refreshJournal(); updateClue();
 requestAnimationFrame(frame);
