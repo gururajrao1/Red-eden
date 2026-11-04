@@ -22,14 +22,16 @@ const E = { EMPTY: 0, REGOLITH: 1, ROCK: 2, SAND: 3, SOIL: 4, ICE: 5, SALT: 6,
             EMBER: 74, PHOSPHORUS: 75, MUD: 76, SINTER: 77, TUFF: 78,
             WALL: 79, VOID: 80, CLONE: 81, BATTERY: 82, WIRE: 83, DIAMOND: 84,
             GOLD: 85, MARBLE: 86, SUGAR: 87, MEAT: 88,
-            SHALE: 89, SAP: 90, FOSSIL: 91 };
+            SHALE: 89, SAP: 90, FOSSIL: 91,
+            HONEY: 92, GUANO: 93, TRONA: 94 };
 const LIFE = { NONE: 0, GERMS: 1, MOSS: 2, GRASS: 3, ALGAE: 4, FUNGUS: 5, LICHEN: 6, LOCUSTS: 7,
   CORAL: 8, CACTUS: 9, SPONGE: 10, FERN: 11, WORMS: 12, TERMITES: 13,
   VIRUS: 14, FISH: 15, BIRD: 16, ANT: 17, TREE: 18,
-  MUSHROOM: 19, KELP: 20, FLOWER: 21, BEE: 22 };
+  MUSHROOM: 19, KELP: 20, FLOWER: 21, BEE: 22,
+  CLOVER: 23, SPIDER: 24, SHRIMP: 25, ARCHAEA: 26, CYANO: 27, STROM: 28, TARDI: 29, DEINO: 30 };
 const TECH = { NONE: 0, HEATER: 1, DOME: 2, SPRINKLER: 3, SHADE: 4, KILN: 5, SCARECROW: 6 };
 const POWDER = new Set([E.SAND, E.SALT, E.ASH, E.SNOW, E.CLAY, E.GUNPOWDER, E.SULFUR, E.FERTILIZER, E.PUMICE, E.GRAVEL,
-  E.SAWDUST, E.COAL, E.DUST, E.HAIL, E.SALTPETRE, E.LIME, E.SEED, E.COMPOST, E.PHOSPHORUS, E.SUGAR]);
+  E.SAWDUST, E.COAL, E.DUST, E.HAIL, E.SALTPETRE, E.LIME, E.SEED, E.COMPOST, E.PHOSPHORUS, E.SUGAR, E.HONEY, E.GUANO]);
 const LIQUID = new Set([E.WATER, E.BRINE, E.ACID, E.LAVA, E.OIL, E.CRYO, E.MERCURY, E.FOAM, E.CEMENT]);
 const GAS = new Set([E.STEAM, E.SMOKE, E.CLOUD, E.HYDROGEN, E.OXYGEN, E.METHANE, E.HELIUM, E.CO2, E.NITROGEN, E.CHLORINE]);
 // thermal conductivity per element (metal fast, gases slow)
@@ -103,6 +105,8 @@ const WORLDS = {
           uv: 0.9, blurb: 'Young Earth: lava vents, sulfur skies, no oxygen — fire needs a pocket of air.' },
   titan: { name: 'Titan', g: 0.14, o2: 0, dayT: -180, nightT: -183, cycle: 90,
           uv: 0.05, blurb: 'Orange haze, methane seas, -180° ice bedrock. Thick air, no oxygen, almost no seasons.' },
+  io: { name: 'Io', g: 0.18, o2: 0, dayT: -100, nightT: -140, cycle: 80,
+          uv: 0.5, blurb: 'Tidal foundry: Jupiter kneads the crust into endless lava lakes under sulfur frost.' },
   venus: { name: 'Venus', g: 0.9, o2: 0, dayT: 460, nightT: 440, cycle: 120,
           uv: 0.3, blurb: 'Runaway greenhouse: 460° basalt plains, sulfur skies, volcanic glass. A kiln with weather.' },
 };
@@ -131,13 +135,13 @@ function blob(rng, arr, W, H, cx, cy, rad, val) {
 function createWorld(worldId, seed) {
   const Wd = WORLDS[worldId] || WORLDS.earth;
   const rng = mulberry32(seed || 1);
-  const w = { id: worldId, Wd, rng, sol: 0, reducer: 0.1,
+  const w = { id: worldId, Wd, rng, sol: 0, reducer: 0.1, o2: Wd.o2 ? 100 : 0, o2loud: false, uClean: 0,
     el: new Uint8Array(GN), life: new Uint8Array(GN), lifeAmt: new Float32Array(GN),
     tech: new Uint8Array(GN), wet: new Float32Array(GN), age: new Float32Array(GN), heat: new Float32Array(GN), hist: [], rot: 0,
     pt: new Float32Array(GN),
     ev: [], quests: {}, m1run: 0, wasNight: true };
   w.el.fill(worldId === 'europa' || worldId === 'titan' ? E.ICE :
-    (worldId === 'earth' ? E.SOIL : (worldId === 'venus' ? E.BASALT : E.REGOLITH)));
+    (worldId === 'earth' ? E.SOIL : ((worldId === 'venus' || worldId === 'io') ? E.BASALT : E.REGOLITH)));
   for (let k = 0; k < 10; k++)
     blob(rng, w.el, GW, GH, (rng() * GW) | 0, (rng() * GH) | 0, 1 + ((rng() * 3) | 0), E.ROCK);
   if (worldId === 'earth') {
@@ -175,6 +179,14 @@ function createWorld(worldId, seed) {
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SULFUR);
     for (let k = 0; k < 2; k++)
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 2, E.GRANITE);
+    for (let k = 0; k < 3; k++)
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SAND);
+  } else if (worldId === 'io') {
+    // tidal foundry: lava lakes in sulfur frost on basalt
+    for (let k = 0; k < 4; k++)
+      blob(rng, w.el, GW, GH, 10 + ((rng() * (GW - 20)) | 0), 18 + ((rng() * (GH - 24)) | 0), 3, E.LAVA);
+    for (let k = 0; k < 5; k++)
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SULFUR);
     for (let k = 0; k < 3; k++)
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SAND);
   } else {
@@ -383,6 +395,38 @@ function habitability(w, x, y, L) {
     }
     case LIFE.KELP: return [['sea', sea], ['mild', t >= 0 && t <= 30]];
     case LIFE.FLOWER: return [['soil', soil], ['damp', wet >= 0.3]]; // perennial: cold only pauses the bloom
+    case LIFE.CLOVER: return [['soil', soil], ['air', airAt(w, x, y)], ['damp', wet >= 0.35], ['mild', t >= 0 && t <= 40]];
+    case LIFE.SPIDER: {
+      let preyNear = false;
+      for (let dy = -1; dy <= 1 && !preyNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const pj = w.life[gidx(x + dx, y + dy)];
+        if (pj === LIFE.ANT || pj === LIFE.LOCUSTS) { preyNear = true; break; }
+      }
+      const sground = (e === E.SOIL || e === E.FERTILIZER || e === E.SAND);
+      return [['ground', sground], ['game', preyNear], ['mild', t >= 0 && t <= 40]];
+    }
+    case LIFE.SHRIMP: {
+      let feedNear = false;
+      for (let dy = -1; dy <= 1 && !feedNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        if (w.life[gidx(x + dx, y + dy)] === LIFE.ALGAE) { feedNear = true; break; }
+      }
+      return [['brine', e === E.BRINE], ['algae', feedNear], ['mild', t >= 0 && t <= 35]];
+    }
+    case LIFE.ARCHAEA: return [['sea', sea], ['hot', t >= 40 && t <= 110]];
+    case LIFE.CYANO: return [['sea', sea], ['daylight', dl >= 0.25], ['mild', t >= -5 && t <= 45]];
+    case LIFE.STROM: {
+      let buildNear = false;
+      for (let dy = -1; dy <= 1 && !buildNear; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const bj = w.life[gidx(x + dx, y + dy)];
+        if (bj === LIFE.CYANO || bj === LIFE.ALGAE) { buildNear = true; break; }
+      }
+      return [['sea', sea], ['daylight', dl >= 0.25], ['builders', buildNear]];
+    }
+    case LIFE.TARDI: return [['furnace', e !== E.LAVA && e !== E.ACID && e !== E.FIRE]];
+    case LIFE.DEINO: return [['damp', wet >= 0.2], ['bake', t <= 60]];
     case LIFE.BEE: {
       let bloomNear = false;
       for (let dy = -1; dy <= 1 && !bloomNear; dy++) for (let dx = -1; dx <= 1; dx++) {
@@ -408,7 +452,11 @@ function habitExplain(checks, name) {
     shade: 'needs shade cloth or night - noon burns it', timber: 'needs wood or paper nearby',
     germs: 'needs live germs nearby to hijack', algae: 'needs algae to graze',
     locusts: 'needs locusts to hunt', forage: 'needs sugar, meat or seeds nearby',
-    bloom: 'needs flowers to work', rot: 'needs fungus rot nearby'
+    bloom: 'needs flowers to work', rot: 'needs fungus rot nearby',
+    game: 'needs ants or locusts to hunt', brine: 'needs brine too salty for fish - salt a pool',
+    hot: 'needs hot-spring water 40° and up - Hadean pools by day',
+    builders: 'needs cyano or algae beside it', furnace: 'only lava, acid and fire kill it',
+    bake: 'too hot - cool it below 60°'
   };
   for (const [k, v] of checks) if (!v) return `${name}: ${HINT[k] || ('fails ' + k)}.`;
   return null;
@@ -785,8 +833,8 @@ function stepWorld(w) {
       if (w.age[i] > 60) { w.el[i] = E.EMPTY; w.age[i] = 0; w.ev.push(['steam', x, y]); }
     }
     else if (e === E.METAL && hasNbr(x, y, n => n === E.WATER) &&
-             (w.Wd.o2 || isDome(w, x, y)) && R() < 0.005) {
-      w.el[i] = E.RUST; w.ev.push(['rust', x, y]); // oxidation needs water + air
+             (w.Wd.o2 || w.o2 >= 5 || isDome(w, x, y)) && R() < 0.01) {
+      w.el[i] = E.RUST; w.ev.push(['rust', x, y]); // oxidation needs water + air (banded iron needs a GOE first)
     }
     else if (e === E.TNT && (t > 300 || hasNbr(x, y, n => n === E.FIRE || n === E.LAVA))) {
       explode(w, x, y, 8);
@@ -851,8 +899,14 @@ function stepWorld(w) {
     else if (e === E.MEAT && R() < 0.005) {
       w.el[i] = E.SOIL; w.ev.push(['rot', x, y]); // carrion composts where it lies
     }
+    else if (e === E.GUANO && w.wet[i] > 0.3 && R() < 0.02) {
+      w.el[i] = E.FERTILIZER; w.ev.push(['rot', x, y]); // guano composts into fertiliser, minus the centuries
+    }
     else if (e === E.MUD && buriedBy(w, x, y) && R() < 0.02) {
       w.el[i] = E.SHALE; w.ev.push(['set', x, y]); // burial lithifies mud into shale
+    }
+    else if (e === E.SALT && hasNbr(x, y, n => n === E.LIME) && w.wet[i] > 0.5 && R() < 0.03) {
+      w.el[i] = E.TRONA; w.ev.push(['set', x, y]); // damp soda salts crust trona, Mono Lake to Don Juan Pond
     }
     else if (e === E.SHALE && (t > 400 || hotNbr(w, x, y, 400)) && R() < 0.1) {
       w.el[i] = E.OIL; w.wet[i] = 0; w.ev.push(['crack', x, y]); // retorting: heat cracks kerogen to oil
@@ -1052,6 +1106,8 @@ function stepLife(w, T, dl) {
   let coral = 0, cactus = 0, sponge = 0, fern = 0, worms = 0, termites = 0;
   let virus = 0, fish = 0, bird = 0, ant = 0, tree = 0;
   let mushroom = 0, kelp = 0, flower = 0, bee = 0, shale = 0, sap = 0, fossil = 0, oil = 0;
+  let honey = 0, guano = 0, trona = 0, rust = 0, sulfur = 0, fertilizer = 0, lava = 0;
+  let clover = 0, spider = 0, shrimp = 0, archaea = 0, cyano = 0, strom = 0, tardi = 0, deino = 0;
   for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
     const i = gidx(x, y), e = w.el[i], L = w.life[i];
     if (e === E.SALT) salt++;
@@ -1075,6 +1131,13 @@ function stepLife(w, T, dl) {
     if (e === E.SAP) sap++;
     if (e === E.FOSSIL) fossil++;
     if (e === E.OIL) oil++;
+    if (e === E.HONEY) honey++;
+    if (e === E.GUANO) guano++;
+    if (e === E.TRONA) trona++;
+    if (e === E.RUST) rust++;
+    if (e === E.SULFUR) sulfur++;
+    if (e === E.FERTILIZER) fertilizer++;
+    if (e === E.LAVA) lava++;
     if (!L) continue;
     const dome = isDome(w, x, y);
     const t = w.pt[i];
@@ -1121,6 +1184,28 @@ function stepLife(w, T, dl) {
           const j = gidx(x + dx, y + dy);
           if ((w.el[j] === E.WATER || w.el[j] === E.BRINE) && !w.life[j] && R() < 0.3) {
             w.life[j] = LIFE.ALGAE; w.lifeAmt[j] = 3;
+          }
+        }
+      }
+    } else if (L === LIFE.CYANO) {
+      // oxygenator: pond scum with a planet-scale exhaust — the Great Oxidation in one tile
+      // hardy pioneer: dozes through nights and frost, exhales only in warm daylight
+      if (w.el[i] !== E.WATER && w.el[i] !== E.BRINE) { w.life[i] = 0; w.lifeAmt[i] = 0; continue; }
+      if (dl < 0.25 || t < -5 || t > 45) {
+        cyano++; // dormant: alive, waiting for dawn
+      } else {
+        cyano++;
+        const was = w.o2;
+        w.o2 = Math.min(100, w.o2 + 0.008);
+        if (!w.o2loud && was < 10 && w.o2 >= 10) { w.o2loud = true; w.ev.push(['oxygen', x, y]); }
+        w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + w.lifeAmt[i] * 0.12);
+        if (R() < (fedAt(w, x, y) ? 0.3 : 0.18)) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.WATER || w.el[j] === E.BRINE) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.CYANO; w.lifeAmt[j] = 3;
+            }
           }
         }
       }
@@ -1385,11 +1470,12 @@ function stepLife(w, T, dl) {
         }
       }
     } else if (L === LIFE.BIRD) {
-      // kestrel: patrols the air, takes locusts, starves without game
-      let game = false;
-      for (let dy = -1; dy <= 1 && !game; dy++) for (let dx = -1; dx <= 1; dx++) {
+      // osprey-kestrel: takes locusts and fish, gleans seeds, starves without game
+      let game = false; // raptor eyes: game spotted three tiles out, struck adjacent
+      for (let dy = -3; dy <= 3 && !game; dy++) for (let dx = -3; dx <= 3; dx++) {
         if (!dx && !dy || !inG(x + dx, y + dy)) continue;
-        if (w.life[gidx(x + dx, y + dy)] === LIFE.LOCUSTS) { game = true; break; }
+        const gj = gidx(x + dx, y + dy);
+        if (w.life[gj] === LIFE.LOCUSTS || w.life[gj] === LIFE.FISH || w.el[gj] === E.SEED) { game = true; break; }
       }
       if (e === E.WATER || e === E.BRINE || e === E.LAVA || e === E.ACID || !airAt(w, x, y) || t < 0 || t > 40) {
         if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
@@ -1399,12 +1485,13 @@ function stepLife(w, T, dl) {
           for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
             if (!dx && !dy || !inG(x + dx, y + dy)) continue;
             const j = gidx(x + dx, y + dy);
-            if (w.life[j] === LIFE.LOCUSTS && R() < 0.5) {
+            const prey = w.life[j];
+            if ((prey === LIFE.LOCUSTS && R() < 0.5) || (prey === LIFE.FISH && R() < 0.15)) {
               w.life[j] = 0; w.lifeAmt[j] = 0; w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 4); w.ev.push(['hunt', x + dx, y + dy]); break;
             }
           }
         }
-        if (!game && R() < 0.2) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+        if (!game && R() < 0.08) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; } // warm blood buys time
         if (game && R() < 0.15) {
           for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
             if (!dx && !dy || !inG(x + dx, y + dy)) continue;
@@ -1414,15 +1501,25 @@ function stepLife(w, T, dl) {
             }
           }
         }
+        if (R() < 0.08) { // colonies whitewash the cliffs: guano islands are fertiliser mines
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            const nj = w.el[j];
+            if ((nj === E.EMPTY || ((nj === E.ROCK || nj === E.SOIL) && !w.life[j])) && R() < 0.3) {
+              w.el[j] = E.GUANO; w.ev.push(['feed', x + dx, y + dy]); break;
+            }
+          }
+        }
       }
     } else if (L === LIFE.ANT) {
-      // foragers: haul sugar, meat and seeds home, nest in soil
+      // foragers: haul sugar, meat, seeds and honey home, nest in soil
       const ahost = (e === E.SOIL || e === E.FERTILIZER || e === E.SAND);
       let forage = false;
       for (let dy = -1; dy <= 1 && !forage; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy || !inG(x + dx, y + dy)) continue;
         const n = w.el[gidx(x + dx, y + dy)];
-        if (n === E.SUGAR || n === E.MEAT || n === E.SEED) { forage = true; break; }
+        if (n === E.SUGAR || n === E.MEAT || n === E.SEED || n === E.HONEY) { forage = true; break; }
       }
       if (!ahost || t < 5 || t > 40) {
         if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
@@ -1432,7 +1529,7 @@ function stepLife(w, T, dl) {
           for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
             if (!dx && !dy || !inG(x + dx, y + dy)) continue;
             const j = gidx(x + dx, y + dy), n = w.el[j];
-            if ((n === E.SUGAR || n === E.MEAT || n === E.SEED) && R() < 0.4) {
+            if ((n === E.SUGAR || n === E.MEAT || n === E.SEED || n === E.HONEY) && R() < 0.4) {
               w.el[j] = E.EMPTY; w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 3); w.ev.push(['hunt', x + dx, y + dy]); break;
             }
           }
@@ -1574,6 +1671,16 @@ function stepLife(w, T, dl) {
               break;
             }
           }
+          if (w.lifeAmt[i] >= 10 && R() < 0.35) { // the hive puts up honey: colonies winter on stored nectar
+            for (let hy = -1; hy <= 1; hy++) for (let hx = -1; hx <= 1; hx++) {
+              if (!hx && !hy || !inG(x + hx, y + hy)) continue;
+              const q = gidx(x + hx, y + hy);
+              const nq = w.el[q];
+              if ((nq === E.EMPTY || ((nq === E.SOIL || nq === E.FERTILIZER || nq === E.SEED) && !w.life[q])) && R() < 0.4) {
+                w.el[q] = E.HONEY; w.ev.push(['feed', x + hx, y + hy]); break;
+              }
+            }
+          }
         }
         if (w.lifeAmt[i] >= 20 && R() < 0.1) { // the hive swarms
           for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
@@ -1602,6 +1709,179 @@ function stepLife(w, T, dl) {
           }
         }
       }
+    } else if (L === LIFE.CLOVER) {
+      // nitrogen-fixer: clover feeds the soil it stands in, the way rotations rest fields
+      const csoil = (w.el[i] === E.SOIL || w.el[i] === E.FERTILIZER);
+      if (!airAt(w, x, y) || !csoil || w.wet[i] < 0.35 || t < 0 || t > 40) {
+        w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['wither', x, y]); continue;
+      }
+      clover++;
+      const fedc = fedAt(w, x, y);
+      if (R() < (fedc ? 0.4 : 0.25)) {
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+          const j = gidx(x + dx, y + dy);
+          if ((w.el[j] === E.SOIL || w.el[j] === E.FERTILIZER) && (w.wet[j] > 0.35 || fedc) && !w.life[j] && R() < 0.3) {
+            w.life[j] = LIFE.CLOVER; w.lifeAmt[j] = 3;
+          } else if (w.el[j] === E.SOIL && !w.life[j] && R() < 0.03) {
+            w.el[j] = E.FERTILIZER; w.ev.push(['feed', x + dx, y + dy]); // rhizobia pay rent in nitrogen
+          }
+        }
+      }
+    } else if (L === LIFE.SPIDER) {
+      // pest control: takes ants and locusts, spares the bees, starves without prey
+      const shost = (e === E.SOIL || e === E.FERTILIZER || e === E.SAND);
+      let prey = false;
+      for (let dy = -1; dy <= 1 && !prey; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const pj = w.life[gidx(x + dx, y + dy)];
+        if (pj === LIFE.ANT || pj === LIFE.LOCUSTS) { prey = true; break; }
+      }
+      if (!shost || t < 0 || t > 40) {
+        if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        spider++;
+        if (prey && R() < 0.4) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.life[j] === LIFE.ANT || w.life[j] === LIFE.LOCUSTS) && R() < 0.5) {
+              w.life[j] = 0; w.lifeAmt[j] = 0; w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 4); w.ev.push(['hunt', x + dx, y + dy]); break;
+            }
+          }
+        }
+        if (!prey && R() < 0.1) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+        if (w.lifeAmt[i] >= 20 && R() < 0.1) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.SOIL || w.el[j] === E.SAND) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.SPIDER; w.lifeAmt[j] = 3; w.lifeAmt[i] = 8;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.SHRIMP) {
+      // brine grazer: Artemia's niche is water too salty for fish, with algae to eat
+      const ssea = (e === E.BRINE);
+      let sfed = false;
+      for (let dy = -1; dy <= 1 && !sfed; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const j = gidx(x + dx, y + dy);
+        if (w.life[j] === LIFE.ALGAE) {
+          sfed = true;
+          if (R() < 0.2) { w.life[j] = 0; w.lifeAmt[j] = 0; w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 3); w.ev.push(['nibble', x + dx, y + dy]); }
+          break;
+        }
+      }
+      if (!ssea || t < 0 || t > 35) {
+        if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        shrimp++;
+        if (!sfed && R() < 0.05) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+        if (sfed && R() < 0.2) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if (w.el[j] === E.BRINE && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.SHRIMP; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.ARCHAEA) {
+      // hyperthermophile: hot-spring fauna (Taq grows 50-80, holds on from 40), dies in warm water
+      const asea = (e === E.WATER || e === E.BRINE);
+      if (!asea || t < 40 || t > 110) {
+        if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else {
+        archaea++;
+        w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 0.3);
+        if (R() < 0.15) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.WATER || w.el[j] === E.BRINE) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.ARCHAEA; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.STROM) {
+      // stromatolite: sunlit mats that rain limestone — needs builders (cyano/algae) beside it
+      let feed = false;
+      for (let dy = -1; dy <= 1 && !feed; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const fj = w.life[gidx(x + dx, y + dy)];
+        if (fj === LIFE.CYANO || fj === LIFE.ALGAE) { feed = true; break; }
+      }
+      const shome = (e === E.WATER || e === E.BRINE || e === E.LIMESTONE); // mats creep across their own reef
+      if (!shome) {
+        if (R() < 0.4) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      } else if (dl < 0.25 || t < 0 || t > 40 || e === E.LIMESTONE) {
+        strom++; // dormant: mats wait out nights and chills, and rest on finished rock
+      } else {
+        strom++;
+        if (feed && R() < 0.1) { // a day's growth: trap sediment, precipitate carbonate, entomb the builders
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.WATER || w.el[j] === E.BRINE) && w.life[j] !== LIFE.STROM && R() < 0.3) {
+              w.el[j] = E.LIMESTONE; w.ev.push(['reef', x + dx, y + dy]); break;
+            }
+          }
+        }
+        if (feed && R() < 0.08) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.WATER || w.el[j] === E.BRINE) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.STROM; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.TARDI) {
+      // water bear: grazes mild water, tun-dormant through everything else — vacuum, frost, noon heat
+      const active = (e === E.WATER || e === E.BRINE) && t >= 0 && t <= 30;
+      tardi++; // tun or active, it counts: dormancy is survival, not death
+      if (active) {
+        w.lifeAmt[i] = Math.min(40, w.lifeAmt[i] + 0.2);
+        if (R() < 0.06) {
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+            const j = gidx(x + dx, y + dy);
+            if ((w.el[j] === E.WATER || w.el[j] === E.BRINE) && !w.life[j] && R() < 0.3) {
+              w.life[j] = LIFE.TARDI; w.lifeAmt[j] = 3;
+            }
+          }
+        }
+      }
+    } else if (L === LIFE.DEINO) {
+      // Conan the Bacterium: shrugs off UV that kills germs, dozes through frost, remediates uranium into lead
+      if (w.wet[i] < 0.2 || t > 60) {
+        if (R() < 0.5) { w.life[i] = 0; w.lifeAmt[i] = 0; w.ev.push(['perish', x, y]); continue; }
+      }
+      deino++;
+      if (t < -5) continue; // dormant: frozen but viable, like the real microbe
+      w.lifeAmt[i] = Math.min(60, w.lifeAmt[i] + w.lifeAmt[i] * 0.1 * Math.min(1, w.wet[i]));
+      if (R() < 0.15) {
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+          const j = gidx(x + dx, y + dy);
+          if (w.wet[j] > 0.2 && w.el[j] !== E.WATER && w.el[j] !== E.BRINE && w.el[j] !== E.LAVA &&
+              w.el[j] !== E.ACID && !w.life[j] && R() < 0.3) {
+            w.life[j] = LIFE.DEINO; w.lifeAmt[j] = 6;
+          }
+        }
+      }
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { // bioremediation shift
+        if (!dx && !dy || !inG(x + dx, y + dy)) continue;
+        const j = gidx(x + dx, y + dy);
+        if (w.el[j] === E.URANIUM && R() < 0.05) {
+          w.el[j] = E.LEAD; w.uClean++; w.ev.push(['clean', x + dx, y + dy]); break;
+        }
+      }
     }
   }
   // cumulative selection for brine-eaters
@@ -1620,6 +1900,8 @@ function stepLife(w, T, dl) {
   w.counts = { germs: Math.round(germs), moss, grass, algae, fungus, lichen, locusts, salt, acid, water, brick, co2, glass, lime, limestone,
     coral, cactus, sponge, fern, worms, termites, vent, wood, soil, virus, fish, bird, ant, tree, sugar, meat,
     gold, marble, diamond, steel, mushroom, kelp, flower, bee, shale, sap, fossil, oil,
+    honey, guano, trona, rust, sulfur, fertilizer, lava,
+    clover, spider, shrimp, archaea, cyano, strom, tardi, deino,
     ecoH: Math.round(ecoH * 1000) / 1000, richness, biomass: pop };
 }
 
@@ -1702,6 +1984,34 @@ const QUESTS = [
     done: (w, c) => c.flower >= 20, guide: 'Wet soil, daylight, then flowers by the dozen — they persist the night but only seed by day.' },
   { id: 'E13', world: 'earth', name: 'Shale oil', goal: 'crack 10 oil from shale',
     done: (w, c) => c.oil >= 10, guide: 'Bury mud under sand, wait for shale, then kiln it past 400°: kerogen cracks to oil.' },
+  { id: 'E14', world: 'earth', name: 'Honey harvest', goal: 'put up 5 honey',
+    done: (w, c) => c.honey >= 5, guide: 'Flowers by day, bees at the bed edge with bare ground or seed litter for comb: fed hives store honey.' },
+  { id: 'E15', world: 'earth', name: 'Guano island', goal: 'whitewash 12 guano',
+    done: (w, c) => c.guano >= 12, guide: 'Stock a pool (algae, then fish), roost birds on the shore soil: fed colonies whitewash the cliffs.' },
+  { id: 'E16', world: 'earth', name: 'Clover rotation', goal: 'field 40 clover',
+    done: (w, c) => c.clover >= 40, guide: 'Like grass but it pays rent: clover turns neighbouring dirt to fertiliser. Rest the field, reap it.' },
+  { id: 'E17', world: 'earth', name: 'Spider guard', goal: 'spiders hold the field locust-free',
+    done: (w, c) => c.spider >= 2 && c.locusts === 0, guide: 'Grow grass, loose locusts, then spiders: they eat the swarm and starve after. Biocontrol, not pets.' },
+  { id: 'E19', world: 'earth', name: 'Stromatolite reef', goal: 'lay 6 reef limestone',
+    done: (w, c) => c.limestone >= 6, guide: 'Cyano first, let it spread, then stromatolites beside the builders: mats rain limestone and entomb them.' },
+  { id: 'E20', world: 'earth', name: 'Soda flat', goal: 'crust 10 trona',
+    done: (w, c) => c.trona >= 10, guide: 'Salt flat, scattered lime, sprinkler mist: damp soda salts crust trona. Flood it and quicklime boils the pool.' },
+  { id: 'U5', world: 'europa', name: 'Brine stock', goal: 'graze 5 brine shrimp',
+    done: (w, c) => c.shrimp >= 5, guide: 'Five heaters hold the pool, salt it to brine, stock algae at dawn, then shrimp: too salty for fish, just right for Artemia.' },
+  { id: 'H8', world: 'hadean', name: 'Hot-spring seed', goal: 'bloom 12 archaea by day',
+    done: (w, c) => c.archaea >= 12, guide: 'Walled pool on hot ground, seed the same morning: archaea own 40°+ water by day and die back at night.' },
+  { id: 'R5', world: 'mars', name: 'Oxygenate', goal: 'breathe out 10 free oxygen',
+    done: (w) => w.o2 >= 10, guide: 'Heated pool, seed cyano, wait out the sols: it dozes through 35-tick nights and exhales every day. Watch the air meter.' },
+  { id: 'R6', world: 'mars', name: 'Decontaminate', goal: 'clean 5 uranium to lead',
+    done: (w) => w.uClean >= 5, guide: 'Dome, heater, sprinkler over uranium, seed by day: Deinococcus ignores UV that kills germs and remediates ore to lead.' },
+  { id: 'R7', world: 'mars', name: 'Banded iron', goal: 'rust 3 iron in free oxygen',
+    done: (w, c) => c.rust >= 3, guide: 'After Oxygenate: lay metal in the pool. No dome needed anymore — your own air rusts it. BIFs, minus the eons.' },
+  { id: 'M5', world: 'moon', name: 'Moonwalk', goal: 'tardigrades outlast a full cycle',
+    done: (w) => w.sol > 90 && w.counts.tardi > 0, guide: 'Paint water bears on the ice and play a full 90-tick cycle: tun-state sleeps through vacuum, frost and noon.' },
+  { id: 'I1', world: 'io', name: 'Sulfur snow', goal: 'hold 140 sulfur',
+    done: (w, c) => c.sulfur >= 140, guide: 'Io rains sulfur frost: gather the fields and paint your own drifts. The foundry pays in yellow.' },
+  { id: 'I2', world: 'io', name: 'Living lake', goal: 'keep 100 lava liquid',
+    done: (w, c) => c.lava >= 100, guide: 'Pour fresh lava over the lakes: crust wins unless you feed them. Tidal heat does the rest.' },
   { id: 'H7', world: 'hadean', name: 'Diamond core', goal: 'press 3 diamonds at a vent',
     done: (w, c) => c.diamond >= 3, guide: 'Coal against a lava vent: Hadean heat does the pressing. Mind the quench steam.' },
 ];

@@ -25,6 +25,9 @@ const PALETTE = [
   { kind: 'base', id: 89, name: 'Shale', c: '#4a4a52', sci: 'Buried mud, lithified: bake it past 400° and kerogen cracks to oil. Fracking, minus the rig.' },
   { kind: 'base', id: 90, name: 'Sap', c: '#d8a838', sci: 'Tree resin: burns sweet, dissolves in water, fossilises to amber. Ants tap it too.' },
   { kind: 'base', id: 91, name: 'Fossil', c: '#c8b898', sci: 'Bone mineralised in the dark: deep time you can hold. Worth more than bone.' },
+  { kind: 'base', id: 92, name: 'Honey', c: '#d87818', sci: 'Winter stores: fed hives stash nectar as honey on bare ground. Ants rob it.' },
+  { kind: 'base', id: 93, name: 'Guano', c: '#e8dcc8', sci: 'Seabird whitewash: droppings compost to fertiliser in the damp. Islands are mines.' },
+  { kind: 'base', id: 94, name: 'Trona', c: '#d8e8d8', sci: 'Soda crust: damp salt + lime dry into trona. Mono Lake chemistry, minus the lake.' },
   { kind: 'base', id: 52, name: 'Granite', c: '#9c8894', sci: 'Continental rock: shrugs off TNT and acid both. Monuments are made of this.' },
   { kind: 'base', id: 53, name: 'Limestone', c: '#a4bcc8', sci: 'Reef rock and chalk cliffs: corals lay it down, kilns burn it into quicklime, acid fizzes it.' },
   { kind: 'base', id: 50, name: 'Dust', c: '#c89888', sci: 'Moon dust is razor glass; Mars dust buries rovers. Wet it and it settles into clay.' },
@@ -116,13 +119,21 @@ const PALETTE = [
   { kind: 'life', id: 13, name: 'Termites', c: '#e8e0c0', sci: 'Wood-eaters: chew timber to sawdust, starve without it. Recyclers with teeth.' },
   { kind: 'life', id: 14, name: 'Virus', c: '#c8d838', sci: 'Hijacker: turns neighbouring germs into more virus, dies in UV. An epidemic in a tile.' },
   { kind: 'life', id: 15, name: 'Fish', c: '#c8d8e0', sci: 'Grazer: needs open water and algae to eat, fouls in acid. Water → algae → fish.' },
-  { kind: 'life', id: 16, name: 'Bird', c: '#8a6a4a', sci: 'Kestrel: patrols the air, takes locusts, starves without game. Biocontrol with wings.' },
-  { kind: 'life', id: 17, name: 'Ant', c: '#7a2a1a', sci: 'Foragers: haul sugar, meat and seeds home to soil nests. A tiny logistics network.' },
+  { kind: 'life', id: 16, name: 'Bird', c: '#8a6a4a', sci: 'Osprey-kestrel: takes locusts and fish, gleans seeds, whitewashes cliffs with guano.' },
+  { kind: 'life', id: 17, name: 'Ant', c: '#7a2a1a', sci: 'Foragers: haul sugar, meat, seeds and honey home to soil nests. A tiny logistics network.' },
   { kind: 'life', id: 18, name: 'Tree', c: '#2a7a2a', sci: 'Forest giant: roots in damp soil, rains seeds, outlives the gardener. Wood you can grow.' },
   { kind: 'life', id: 19, name: 'Mushroom', c: '#e8e0d0', sci: 'Fruits from fungus rot in shade: the mycelium eats, the mushroom breeds. Night shift only.' },
   { kind: 'life', id: 20, name: 'Kelp', c: '#2a8a4a', sci: 'Underwater forest: roots in open water, drinks daylight, persists the night. Grows by day.' },
   { kind: 'life', id: 21, name: 'Flower', c: '#e86a9a', sci: 'Bloomer: needs soil, damp and day; rains seeds. Bees do the rest.' },
-  { kind: 'life', id: 22, name: 'Bee', c: '#e8c838', sci: 'Pollinator: works flowers for nectar, sows seeds by accident, swarms when fed.' },
+  { kind: 'life', id: 22, name: 'Bee', c: '#e8c838', sci: 'Pollinator: works flowers for nectar, stashes honey when fed, swarms when full.' },
+  { kind: 'life', id: 23, name: 'Clover', c: '#35c25a', sci: 'Nitrogen-fixer: rhizobia pay rent — neighbouring dirt becomes fertiliser. Rest the field.' },
+  { kind: 'life', id: 24, name: 'Spider', c: '#3a2a3a', sci: 'Pest control: eats ants and locusts, spares bees, starves after victory. Biocontrol.' },
+  { kind: 'life', id: 25, name: 'Shrimp', c: '#f4a8a8', sci: 'Artemia: grazes algae in brine too salty for fish. The grazer Europa was missing.' },
+  { kind: 'life', id: 26, name: 'Archaea', c: '#ff7a3a', sci: 'Hot-spring fauna: owns 40°+ water by day, dies back at night. The PCR bug’s cousins.' },
+  { kind: 'life', id: 27, name: 'Cyano', c: '#2ad8a8', sci: 'Oxygenator: exhales free oxygen by day, dozes at night. The Great Oxidation, bottled.' },
+  { kind: 'life', id: 28, name: 'Strom', c: '#8a9a6a', sci: 'Reef mat: beside builders it rains limestone and entombs them. Oldest fossils, working.' },
+  { kind: 'life', id: 29, name: 'Tardi', c: '#b8a8c8', sci: 'Water bear: tun-state sleeps through vacuum, frost and noon heat. Wakes in mild water.' },
+  { kind: 'life', id: 30, name: 'Deino', c: '#e83a5a', sci: 'Conan the Bacterium: shrugs off UV, dozes through frost, remediates uranium into lead.' },
   { group: 'Tech' },
   { kind: 'tech', id: 1, name: 'Heater', c: '#FFB000', sci: 'Holds +20°C nearby through any night. Survival in a box.' },
   { kind: 'tech', id: 2, name: 'Dome', c: '#2DD4BF', sci: 'Sealed greenhouse: blocks UV, traps heat, carries its own air.' },
@@ -143,15 +154,17 @@ const TINT = { // world-tinted ground
   hadean: { 1: '#4a3438', 3: '#5a4a3a' },
   titan: { 1: '#8a7a5a', 3: '#c8a050' },
   venus: { 1: '#7a5a40', 3: '#a87848' },
+  io: { 1: '#6a5a4a', 3: '#a88a3a' },
 };
 const ENV_BLURB = {
-  earth: 'EARTH — the control. O₂ air, mild sun, stable water. Learn the tools here. (Problems: Meadow, Acid spill, Kiln, Compost, Swarm, Quicklime, Straw guardian, Reef, Web of life, Fish pond, Gilded copies, Flower bed, Shale oil.)',
-  moon: 'MOON — vacuum, +120/−130°C swings (Diviner), fierce UV, shadow ice (LCROSS). Heaters + domes or nothing lives. (Problems: Ice harvest, Night greenhouse, Heavy air, Glass house.)',
-  mars: 'MARS — thin CO₂, equatorial summer site, UV 0.55, perchlorate patches (Phoenix). Brines persist; eaters evolve. (Problems: De-poison, Bloom, Dome bloom, First footprints.)',
-  europa: 'EUROPA — ice crust, salty chaos brines, Jupiter radiation. Meltwater is life’s only door. (Problems: Meltwater, Brine garden, Warm pool, White smoker.)',
-  hadean: 'HADEAN EARTH — lava vents, sulfur skies, no oxygen. Brew acid, garden heat. (Problems: Acid pond, Hot garden, Glass shore, Shade garden, Primordial soup, Genesis, Diamond core.)',
+  earth: 'EARTH — the control. O₂ air, mild sun, stable water. Learn the tools here. (Problems: Meadow, Acid spill, Kiln, Compost, Swarm, Quicklime, Straw guardian, Reef, Web of life, Fish pond, Gilded copies, Flower bed, Shale oil, Honey harvest, Guano island, Clover rotation, Spider guard, Stromatolite reef, Soda flat.)',
+  moon: 'MOON — vacuum, +120/−130°C swings (Diviner), fierce UV, shadow ice (LCROSS). Heaters + domes or nothing lives. (Problems: Ice harvest, Night greenhouse, Heavy air, Glass house, Moonwalk.)',
+  mars: 'MARS — thin CO₂, equatorial summer site, UV 0.55, perchlorate patches (Phoenix). Brines persist; eaters evolve. (Problems: De-poison, Bloom, Dome bloom, First footprints, Oxygenate, Decontaminate, Banded iron.)',
+  europa: 'EUROPA — ice crust, salty chaos brines, Jupiter radiation. Meltwater is life’s only door. (Problems: Meltwater, Brine garden, Warm pool, White smoker, Brine stock.)',
+  hadean: 'HADEAN EARTH — lava vents, sulfur skies, no oxygen. Brew acid, garden heat. (Problems: Acid pond, Hot garden, Glass shore, Shade garden, Primordial soup, Genesis, Diamond core, Hot-spring seed.)',
   titan: 'TITAN — orange haze, methane seas (oil stands in for liquid methane), −180° ice bedrock. Fire snuffs; hothouses or nothing lives. (Problems: Oasis, Hothouse, Sun glass, Nuggets.)',
   venus: 'VENUS — 460° basalt plains, sulfur frost, lava fields. Water boils, life is impossible; the planet is a kiln. (Problems: Volcanic glass, Marble works, Diamond forge, Steel works.)',
+  io: 'IO — tidal foundry: Jupiter kneads the crust into lava lakes under sulfur frost, −100° days. Resurface or freeze. (Problems: Sulfur snow, Living lake.)',
 };
 // progression: research points buy ranks; ranks unlock worlds. Materials stay free forever.
 const QUEST_RP = { E1: 100, E2: 100, M1: 100, M2: 100, R1: 100, R2: 100,
@@ -160,10 +173,12 @@ const QUEST_RP = { E1: 100, E2: 100, M1: 100, M2: 100, R1: 100, R2: 100,
   H4: 250, E9: 250, H5: 150, H6: 250,
   E4: 250, M4: 250, R4: 250,
   T1: 150, T2: 150, T3: 150, T4: 150, V1: 150, V2: 150, V3: 250, V4: 150,
-  E10: 150, E11: 150, E12: 150, E13: 150, H7: 250 };
+  E10: 150, E11: 150, E12: 150, E13: 150, H7: 250,
+  E14: 150, E15: 150, E16: 150, E17: 150, E19: 150, E20: 150, U5: 150, H8: 150,
+  R5: 250, R6: 150, R7: 150, M5: 150, I1: 150, I2: 150 };
 const RANKS = [{ rp: 0, name: 'Undergrad' }, { rp: 400, name: 'Grad student' },
   { rp: 1000, name: 'Principal investigator' }, { rp: 1600, name: 'Mission director' }];
-const UNLOCK_RP = { europa: 400, titan: 700, hadean: 1000, venus: 1200 };
+const UNLOCK_RP = { europa: 400, titan: 700, io: 900, hadean: 1000, venus: 1200 };
 function getRP() {
   try { return +(localStorage.getItem('sandbox_rp_total') || 0); } catch (e) { return 0; }
 }
@@ -249,6 +264,7 @@ const SFX = {
   unmake: [[200, .15, 'sawtooth', .02], [120, .2, 'sawtooth', .02, .05]],
   bloom: [[880, .07, 'sine', .02], [1174, .09, 'sine', .02, .05]],
   crack: [[150, .12, 'sawtooth', .02], [90, .15, 'sawtooth', .02, .04]],
+  oxygen: [[523, .1, 'sine', .02], [659, .1, 'sine', .02, .05], [784, .12, 'sine', .02, .1]],
 };
 function playSfx(kind) {
   const notes = SFX[kind];
@@ -382,7 +398,8 @@ const BASEC = { 0: '#060403', 1: '#9a8a7a', 2: '#4a3430', 3: '#d8b25c', 4: '#7a4
   74: '#2a1408', 75: '#e8e4a8', 76: '#5a6a3a', 77: '#c8c4b4', 78: '#5e4a6e',
   79: '#3a3a40', 80: '#050508', 81: '#4a8a8a', 82: '#3f7a52', 83: '#d88a3a',
   84: '#d8f4f4', 85: '#e8b828', 86: '#c9bfa8', 87: '#f4f0e4', 88: '#a84a3a',
-  89: '#4a4a52', 90: '#d8a838', 91: '#c8b898' };
+  89: '#4a4a52', 90: '#d8a838', 91: '#c8b898',
+  92: '#d87818', 93: '#e8dcc8', 94: '#d8e8d8' };
 
 let view = 0; // 0 normal, 1 heat vision
 /* Single-blit renderer: every tile texture below writes into one full-canvas
@@ -710,6 +727,20 @@ function draw() {
       R0(px + 3, py + 3, 6, 6, rgb('#e8d8b8'));
       R0(px + 5, py + 5, 2, 2, rgb('#8a7a5a'));
     }
+    if (e === 92) { // honey: golden comb cells
+      R0(px + 2, py + 3, 3, 3, rgb('#f4b838'));
+      R0(px + 7, py + 6, 3, 3, rgb('#f4b838'));
+      R0(px + 3, py + 4, 1, 1, rgb('#fff0b8'));
+    }
+    if (e === 93) { // guano: whitewash splatter
+      R0(px + 2, py + 4, 4, 3, rgb('#f4f0e0'));
+      R0(px + 7, py + 7, 3, 2, rgb('#f4f0e0'));
+      R0(px + 5, py + 2, 2, 2, rgb('#cfc4a8'));
+    }
+    if (e === 94 && hash2(x * 5, y * 11) > 0.35) { // trona: glassy soda glints
+      R0(px + 3, py + 3, 2, 2, rgb('#ffffff'));
+      R0(px + 7, py + 8, 2, 2, rgb('#ffffff'));
+    }
     const L = world.life[i];
     if (L === 1 && world.lifeAmt[i] > 0.5) {
       const n = Math.min(5, 1 + ((world.lifeAmt[i] / 12) | 0));
@@ -829,6 +860,45 @@ function draw() {
       R0(px + 5, py + 5, 1, 3, rgb('#1a1a1a'));
       R0(px + 7, py + 5, 1, 3, rgb('#1a1a1a'));
       R0(px + 3, py + 3, 2, 2, rgb('#f4f0e4'));
+    } else if (L === 23) { // clover: three round leaflets
+      const c23 = rgb('#35c25a');
+      R0(px + 3, py + 4, 3, 3, c23);
+      R0(px + 6, py + 4, 3, 3, c23);
+      R0(px + 4, py + 7, 4, 2, c23);
+      R0(px + 5, py + 5, 1, 1, rgb('#d8ffd8'));
+    } else if (L === 24) { // spider: dark body, long legs
+      R0(px + 5, py + 5, 2, 3, rgb('#3a2a3a'));
+      R0(px + 5, py + 4, 2, 1, rgb('#3a2a3a'));
+      R0(px + 2, py + 3, 2, 1, rgb('#3a2a3a'));
+      R0(px + 8, py + 3, 2, 1, rgb('#3a2a3a'));
+      R0(px + 2, py + 8, 2, 1, rgb('#3a2a3a'));
+      R0(px + 8, py + 8, 2, 1, rgb('#3a2a3a'));
+    } else if (L === 25) { // shrimp: pink comma
+      R0(px + 4, py + 4, 4, 2, rgb('#f4a8a8'));
+      R0(px + 7, py + 6, 2, 3, rgb('#e87878'));
+      R0(px + 4, py + 4, 1, 1, rgb('#1a1a1a'));
+    } else if (L === 26) { // archaea: ember-orange rods
+      const a26 = rgb(world.lifeAmt[i] >= 20 ? '#ff7a3a' : '#ffb838');
+      R0(px + 3, py + 5, 3, 1, a26);
+      R0(px + 6, py + 7, 3, 1, a26);
+    } else if (L === 27) { // cyano: blue-green film with bright cells
+      R0(px + 2, py + 6, 8, 3, rgb('#2ad8a8'));
+      R0(px + 4, py + 5, 2, 1, rgb('#a8fff0'));
+      R0(px + 7, py + 7, 1, 1, rgb('#a8fff0'));
+    } else if (L === 28) { // strom: banded dome mat
+      R0(px + 3, py + 7, 6, 2, rgb('#8a9a6a'));
+      R0(px + 4, py + 5, 4, 2, rgb('#a8b888'));
+      R0(px + 5, py + 3, 2, 2, rgb('#c8d8b8'));
+    } else if (L === 29) { // tardi: plump eight-legged barrel
+      R0(px + 4, py + 4, 4, 5, rgb('#b8a8c8'));
+      R0(px + 3, py + 5, 1, 1, rgb('#b8a8c8'));
+      R0(px + 8, py + 5, 1, 1, rgb('#b8a8c8'));
+      R0(px + 3, py + 8, 1, 1, rgb('#b8a8c8'));
+      R0(px + 8, py + 8, 1, 1, rgb('#b8a8c8'));
+    } else if (L === 30) { // deino: red tetrad clusters
+      R0(px + 3, py + 4, 2, 2, rgb('#e83a5a'));
+      R0(px + 7, py + 6, 2, 2, rgb('#e83a5a'));
+      R0(px + 5, py + 8, 2, 2, rgb('#c82848'));
     }
     if (world.tech[i] === 1) { // heater coil
       R0(px + 2, py + 4, TS - 4, TS - 8, rgb('#3a2a10'));
@@ -953,6 +1023,20 @@ const PROG = { // live progress per problem; defensive: counts may not exist yet
   E12: (w, c) => `${c.flower || 0}/20 flowers`,
   E13: (w, c) => `${c.oil || 0}/10 oil`,
   H7: (w, c) => `${c.diamond || 0}/3 diamond`,
+  E14: (w, c) => `${c.honey || 0}/5 honey`,
+  E15: (w, c) => `${c.guano || 0}/12 guano`,
+  E16: (w, c) => `${c.clover || 0}/40 clover`,
+  E17: (w, c) => `${c.spider || 0}/2 spiders, locusts ${c.locusts || 0}`,
+  E19: (w, c) => `${c.limestone || 0}/6 reef`,
+  E20: (w, c) => `${c.trona || 0}/10 trona`,
+  U5: (w, c) => `${c.shrimp || 0}/5 shrimp`,
+  H8: (w, c) => `${c.archaea || 0}/12 archaea`,
+  R5: (w) => `${(w.o2 || 0).toFixed(1)}/10 O2`,
+  R6: (w) => `${w.uClean || 0}/5 cleaned`,
+  R7: (w, c) => `${c.rust || 0}/3 rust`,
+  M5: (w) => `sol ${w.sol}/90+ tardi ${w.counts.tardi || 0}`,
+  I1: (w, c) => `${c.sulfur || 0}/140 sulfur`,
+  I2: (w, c) => `${c.lava || 0}/100 lava`,
   E9: (w, c) => `H ${(c.ecoH || 0).toFixed(2)}/1.40`,
   H5: (w, c) => `${c.water || 0}/70 water + vent`,
   H6: (w, c) => `${c.germs || 0}/100 germs`,
@@ -1080,6 +1164,7 @@ const SCIENCE = {
   unmake: { t: 'Void', m: 'Unmatter deleted that — only wall contains it. Some doors only open one way.' },
   bloom: { t: 'Pollination', m: 'A bee worked a flower — nectar for the hive, seeds scattered for the meadow. Angiosperms pay in sugar.' },
   crack: { t: 'Cracking', m: 'Heat split shale kerogen into oil — the same cracking refineries run, and Green River ran naturally.' },
+  oxygen: { t: 'Free oxygen', m: 'Cyanobacteria exhaled O2 faster than sinks could swallow it — the Great Oxidation, 2.4 billion years ago, in your pool.' },
 };
 let journal = {}; // stealth assessment: evidence accumulates, never a quiz
 try { journal = JSON.parse(localStorage.getItem('sandbox_journal_v1') || '{}'); } catch (e) { journal = {}; }
@@ -1139,7 +1224,11 @@ const NEEDS = { // what each lifeform needs, in habitability() terms
   14: 'live germs nearby · −10–45°', 15: 'sea water · algae to graze · 0–35°', 16: 'air · locusts to hunt · 0–40°',
   17: 'soil · sugar, meat or seeds · 5–40°', 18: 'soil · damp · 0–35° · drops seeds',
   19: 'fungus rot · shade · damp', 20: 'sea water · 0–30° · grows by day',
-  21: 'soil · damp · blooms open by day', 22: 'flowers nearby · 0–40°' };
+  21: 'soil · damp · blooms open by day', 22: 'flowers nearby · 0–40° · stashes honey when fed',
+  23: 'soil · air · damp · 0–40° · fixes nitrogen', 24: 'soil or sand · ants or locusts · 0–40° · spares bees',
+  25: 'brine · algae to graze · 0–35° · too salty for fish', 26: 'hot water 40–110° · Hadean pools by day',
+  27: 'water · daylight · −5–45° · exhales oxygen · dozes at night', 28: 'water · daylight · cyano or algae beside · lays reef',
+  29: 'anything but lava, acid, fire · tun-sleeps the rest', 30: 'damp · survives UV + frost · cleans uranium' };
 function showTool(p) {
   $('inspect').innerHTML = `<b>${p.name}</b> · ${p.kind}` +
     `<br><span class="sci">${p.sci}</span>` +
@@ -1149,6 +1238,7 @@ function showTool(p) {
 function packWorld(w) {
   return { id: w.id, sol: w.sol, reducer: w.reducer, quests: w.quests, rot: w.rot | 0,
     m1done: !!w.m1done, m2done: !!w.m2done, dawnWin: w.dawnWin | 0, wasNight: !!w.wasNight,
+    o2: w.o2 || 0, o2loud: !!w.o2loud, uClean: w.uClean | 0,
     hist: (w.hist || []).slice(-300),
     el: Array.from(w.el), life: Array.from(w.life), lifeAmt: Array.from(w.lifeAmt),
     tech: Array.from(w.tech), wet: Array.from(w.wet), pt: Array.from(w.pt) };
@@ -1156,6 +1246,7 @@ function packWorld(w) {
 function unpackWorld(pack) {
   const w = createWorld(pack.id, 1);
   w.sol = pack.sol | 0; w.reducer = pack.reducer || 0;
+  w.o2 = (pack.o2 != null ? pack.o2 : (w.Wd.o2 ? 100 : 0)); w.o2loud = !!pack.o2loud; w.uClean = pack.uClean | 0;
   w.quests = pack.quests || {}; w.rot = pack.rot | 0;
   w.m1done = !!pack.m1done; w.m2done = !!pack.m2done;
   w.dawnWin = pack.dawnWin | 0; w.wasNight = pack.wasNight !== false;

@@ -365,5 +365,155 @@ const done = (w, id) => S.QUESTS.find(q => q.id === id).done(w, w.counts);
   step(w, 120);
   ok('E13 Shale oil completes', done(w, 'E13'), 'oil=' + countEl(w, E.OIL));
 }
+// E14 Honey harvest: flower bed by day, bees at the edge with comb space
+{
+  const w = S.createWorld('earth', 815);
+  S.paint(w, 'base', E.SOIL, 32, 25, 4);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  w.sol = 2;
+  S.paint(w, 'life', LIFE.FLOWER, 32, 25, 2);
+  step(w, 20);
+  S.paint(w, 'life', LIFE.BEE, 30, 25, 1);
+  S.paint(w, 'life', LIFE.BEE, 34, 25, 1);
+  step(w, 120);
+  ok('E14 Honey harvest completes', done(w, 'E14'), 'honey=' + countEl(w, E.HONEY));
+}
+// E15 Guano island: stocked pool, birds roosting on the shore
+{
+  const w = S.createWorld('earth', 816);
+  S.paint(w, 'base', E.WATER, 30, 25, 3);
+  w.sol = 2;
+  S.paint(w, 'life', LIFE.ALGAE, 30, 25, 2);
+  S.paint(w, 'life', LIFE.FISH, 30, 25, 1);
+  step(w, 15);
+  S.paint(w, 'life', LIFE.BIRD, 34, 25, 0);
+  S.paint(w, 'life', LIFE.BIRD, 35, 24, 0);
+  S.paint(w, 'life', LIFE.BIRD, 35, 26, 0);
+  S.paint(w, 'life', LIFE.BIRD, 26, 25, 0);
+  S.paint(w, 'life', LIFE.BIRD, 25, 24, 0);
+  step(w, 60);
+  ok('E15 Guano island completes', done(w, 'E15'), 'guano=' + countEl(w, E.GUANO));
+}
+// E16 Clover rotation: like grass, but it feeds the dirt
+{
+  const w = S.createWorld('earth', 817);
+  S.paint(w, 'base', E.SOIL, 32, 25, 4);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  S.paint(w, 'life', LIFE.CLOVER, 32, 25, 2);
+  step(w, 80);
+  ok('E16 Clover rotation completes', done(w, 'E16'), 'clover=' + countLife(w, LIFE.CLOVER));
+}
+// E17 Spider guard: loose locusts, then spiders; guardians, not livestock
+{
+  const w = S.createWorld('earth', 818);
+  S.paint(w, 'base', E.SOIL, 32, 25, 5);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  S.paint(w, 'life', LIFE.GRASS, 32, 25, 4);
+  step(w, 10);
+  S.paint(w, 'life', LIFE.LOCUSTS, 32, 25, 1);
+  S.paint(w, 'life', LIFE.SPIDER, 32, 25, 1);
+  step(w, 12);
+  ok('E17 Spider guard completes', done(w, 'E17'), `spiders=${countLife(w, LIFE.SPIDER)} locusts=${countLife(w, LIFE.LOCUSTS)}`);
+}
+// E19 Stromatolite reef: cyano first and spread, then mats beside the builders
+{
+  const w = S.createWorld('earth', 819);
+  S.paint(w, 'base', E.WATER, 32, 25, 3);
+  w.sol = 8;
+  S.paint(w, 'life', LIFE.CYANO, 32, 25, 2);
+  step(w, 10);
+  S.paint(w, 'life', LIFE.STROM, 32, 25, 1);
+  step(w, 80);
+  ok('E19 Stromatolite reef completes', done(w, 'E19'), 'limestone=' + countEl(w, E.LIMESTONE));
+}
+// E20 Soda flat: damp salt + lime crust trona (floods boil via slaking)
+{
+  const w = S.createWorld('earth', 820);
+  S.paint(w, 'base', E.SALT, 32, 25, 3);
+  S.paint(w, 'base', E.LIME, 32, 25, 1);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  step(w, 80);
+  ok('E20 Soda flat completes', done(w, 'E20'), 'trona=' + countEl(w, E.TRONA));
+}
+// U5 Brine stock: five-heater pool salted to brine, stocked at dawn
+{
+  const w = S.createWorld('europa', 821);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 1);
+  step(w, 100);
+  S.paint(w, 'base', E.SALT, 32, 25, 3);
+  step(w, 20);
+  w.sol = 2;
+  S.paint(w, 'life', LIFE.ALGAE, 32, 25, 2);
+  S.paint(w, 'life', LIFE.SHRIMP, 32, 25, 1);
+  step(w, 30);
+  ok('U5 Brine stock completes', done(w, 'U5'), 'shrimp=' + countLife(w, LIFE.SHRIMP));
+}
+// H8 Hot-spring seed: walled pool on hot ground, seeded the same morning
+{
+  const w = S.createWorld('hadean', 822);
+  for (let x = 28; x <= 34; x++) { S.paint(w, 'base', E.ROCK, x, 22, 0); S.paint(w, 'base', E.ROCK, x, 29, 0); }
+  for (let y = 22; y <= 29; y++) { S.paint(w, 'base', E.ROCK, 28, y, 0); S.paint(w, 'base', E.ROCK, 34, y, 0); }
+  S.paint(w, 'base', E.WATER, 31, 25, 2);
+  step(w, 10);
+  S.paint(w, 'life', LIFE.ARCHAEA, 31, 25, 1);
+  step(w, 20);
+  ok('H8 Hot-spring seed completes', done(w, 'H8'), 'archaea=' + countLife(w, LIFE.ARCHAEA));
+}
+// R5 Oxygenate: heated oasis, cyano dozing through 35-tick nights
+{
+  const w = S.createWorld('mars', 823);
+  S.paint(w, 'base', E.WATER, 32, 25, 2);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 1);
+  step(w, 30);
+  S.paint(w, 'life', LIFE.CYANO, 32, 25, 1);
+  step(w, 170);
+  ok('R5 Oxygenate completes', done(w, 'R5'), 'o2=' + w.o2.toFixed(1));
+}
+// R6 Decontaminate: dome + heater + sprinkler over uranium, seeded by day
+{
+  const w = S.createWorld('mars', 824);
+  S.paint(w, 'base', E.URANIUM, 32, 25, 2);
+  S.paint(w, 'tech', TECH.DOME, 32, 25, 1);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 0);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  step(w, 10);
+  w.sol = 10;
+  S.paint(w, 'life', LIFE.DEINO, 32, 25, 1);
+  step(w, 60);
+  ok('R6 Decontaminate completes', done(w, 'R6'), 'uClean=' + w.uClean);
+}
+// R7 Banded iron: after Oxygenate, lay metal in your own air
+{
+  const w = S.createWorld('mars', 825);
+  S.paint(w, 'base', E.WATER, 32, 25, 2);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 1);
+  step(w, 30);
+  S.paint(w, 'life', LIFE.CYANO, 32, 25, 1);
+  step(w, 150);
+  S.paint(w, 'base', E.METAL, 32, 25, 1);
+  step(w, 120);
+  ok('R7 Banded iron completes', done(w, 'R7'), 'rust=' + countEl(w, E.RUST));
+}
+// M5 Moonwalk: water bears outlast a full 90-tick cycle
+{
+  const w = S.createWorld('moon', 826);
+  S.paint(w, 'life', LIFE.TARDI, 32, 25, 1);
+  step(w, 100);
+  ok('M5 Moonwalk completes', done(w, 'M5'), `tardi=${countLife(w, LIFE.TARDI)} sol=${w.sol}`);
+}
+// I1 Sulfur snow: gather the foundry's frost and paint your own drifts
+{
+  const w = S.createWorld('io', 827);
+  S.paint(w, 'base', E.SULFUR, 32, 25, 4);
+  step(w, 20);
+  ok('I1 Sulfur snow completes', done(w, 'I1'), 'sulfur=' + countEl(w, E.SULFUR));
+}
+// I2 Living lake: pour fresh lava, crust wins unless you feed it
+{
+  const w = S.createWorld('io', 828);
+  S.paint(w, 'base', E.LAVA, 32, 25, 3);
+  step(w, 30);
+  ok('I2 Living lake completes', done(w, 'I2'), 'lava=' + countEl(w, E.LAVA));
+}
 console.log(fail ? `\n${fail} QUEST FAILURES (${pass} passed)` : `\nALL ${pass} QUESTS COMPLETABLE`);
 process.exit(fail ? 1 : 0);

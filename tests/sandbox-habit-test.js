@@ -203,6 +203,85 @@ const alive = (worldId, seed, build, L, ticks) => {
   ok('bees work a blooming bed', n > 0, 'bees=' + n);
 }
 {
+  let [, n] = alive('earth', 737, w => {
+    S.paint(w, 'base', E.SOIL, 32, 25, 4);
+    S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+    S.paint(w, 'life', LIFE.CLOVER, 32, 25, 2);
+  }, LIFE.CLOVER, 80);
+  ok('clover fields a watered bed', n > 0, 'clover=' + n);
+}
+{
+  let [, n] = alive('earth', 738, w => {
+    S.paint(w, 'base', E.SOIL, 32, 25, 5);
+    S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+    S.paint(w, 'life', LIFE.GRASS, 32, 25, 4);
+    for (let k = 0; k < 10; k++) S.stepWorld(w);
+    S.paint(w, 'life', LIFE.LOCUSTS, 32, 25, 1);
+    S.paint(w, 'life', LIFE.SPIDER, 30, 25, 1);
+    S.paint(w, 'life', LIFE.SPIDER, 34, 25, 1);
+  }, LIFE.SPIDER, 12);
+  ok('spiders hold a locust field (briefly)', n > 0, 'spiders=' + n);
+}
+{
+  const w = S.createWorld('europa', 739);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 1);
+  step(w, 100);
+  S.paint(w, 'base', E.SALT, 32, 25, 3);
+  step(w, 20);
+  w.sol = 2;
+  S.paint(w, 'life', LIFE.ALGAE, 32, 25, 2);
+  S.paint(w, 'life', LIFE.SHRIMP, 32, 25, 1);
+  step(w, 30);
+  ok('shrimp graze a dawn brine pool', countLife(w, LIFE.SHRIMP) > 0, 'shrimp=' + countLife(w, LIFE.SHRIMP));
+}
+{
+  const w = S.createWorld('hadean', 822); // same morning as the quest proof: day-shift life, day-shift seed
+  for (let x = 28; x <= 34; x++) { S.paint(w, 'base', E.ROCK, x, 22, 0); S.paint(w, 'base', E.ROCK, x, 29, 0); }
+  for (let y = 22; y <= 29; y++) { S.paint(w, 'base', E.ROCK, 28, y, 0); S.paint(w, 'base', E.ROCK, 34, y, 0); }
+  S.paint(w, 'base', E.WATER, 31, 25, 2);
+  step(w, 10);
+  S.paint(w, 'life', LIFE.ARCHAEA, 31, 25, 1);
+  step(w, 20);
+  ok('archaea bloom a daylit hot pool', countLife(w, LIFE.ARCHAEA) > 0, 'archaea=' + countLife(w, LIFE.ARCHAEA));
+}
+{
+  const w = S.createWorld('mars', 741);
+  S.paint(w, 'base', E.WATER, 32, 25, 2);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 1);
+  step(w, 30);
+  S.paint(w, 'life', LIFE.CYANO, 32, 25, 1);
+  step(w, 60);
+  ok('cyano holds a heated oasis', countLife(w, LIFE.CYANO) > 0, 'cyano=' + countLife(w, LIFE.CYANO));
+}
+{
+  const w = S.createWorld('earth', 742);
+  S.paint(w, 'base', E.WATER, 32, 25, 3);
+  w.sol = 8;
+  S.paint(w, 'life', LIFE.CYANO, 32, 25, 2);
+  step(w, 10);
+  S.paint(w, 'life', LIFE.STROM, 32, 25, 1);
+  step(w, 40);
+  ok('strom mats a builder pool', countLife(w, LIFE.STROM) > 0, 'strom=' + countLife(w, LIFE.STROM));
+}
+{
+  let [, n] = alive('moon', 743, w => {
+    S.paint(w, 'life', LIFE.TARDI, 32, 25, 1);
+  }, LIFE.TARDI, 50);
+  ok('tardigrades tun through vacuum', n > 0, 'tardi=' + n);
+}
+{
+  const w = S.createWorld('mars', 744);
+  S.paint(w, 'base', E.URANIUM, 32, 25, 2);
+  S.paint(w, 'tech', TECH.DOME, 32, 25, 1);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 0);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  step(w, 10);
+  w.sol = 10;
+  S.paint(w, 'life', LIFE.DEINO, 32, 25, 1);
+  step(w, 30);
+  ok('deino crews a warm reactor yard', countLife(w, LIFE.DEINO) > 0, 'deino=' + countLife(w, LIFE.DEINO));
+}
+{
   const w = S.createWorld('venus', 731); // 460° sterilises everything, by measurement
   const mild = S.habitability(w, 32, 25, LIFE.MOSS).find(([k]) => k === 'mild');
   ok('venus reads lethal for moss', mild && mild[1] === false, JSON.stringify(mild));
@@ -283,7 +362,7 @@ const alive = (worldId, seed, build, L, ticks) => {
   const src = fs.readFileSync(__dirname + '/../app/sandbox.js', 'utf8');
   const m = src.match(/const NEEDS = \{[^}]*\};/);
   const needs = eval('(' + m[0].replace('const NEEDS =', '').replace(/;$/, '') + ')');
-  ok('picker names needs for all 22', Object.keys(needs).length === 22, Object.keys(needs).length);
+  ok('picker names needs for all 30', Object.keys(needs).length === 30, Object.keys(needs).length);
 }
 console.log(fail ? `\n${fail} HABIT FAILURES (${pass} passed)` : `\nALL ${pass} HABITATS HONEST`);
 process.exit(fail ? 1 : 0);
