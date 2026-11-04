@@ -1,6 +1,6 @@
 /* RED EDEN service worker: the app shell works offline after one visit.
    Bump CACHE when shipping new shell files. */
-const CACHE = 'reden-v5'; // bump every deploy: cache-first shell or return visitors stay stale
+const CACHE = 'reden-v6'; // bump every deploy: cache-first shell or return visitors stay stale
 const SHELL = [
   'sandbox.html', 'index.html', 'lab.html', 'library.html', 'story.html',
   'style.css', 'simsandbox.js', 'sandbox.js', 'papers.js', 'chapters.js',
