@@ -156,17 +156,19 @@ const TINT = { // world-tinted ground
   venus: { 1: '#7a5a40', 3: '#a87848' },
   io: { 1: '#6a5a4a', 3: '#a88a3a' },
   archaean: { 1: '#5a6a4a', 3: '#7aa86a' },
+  enceladus: { 1: '#a8c0c8', 3: '#d8ecf0' },
 };
 const ENV_BLURB = {
-  earth: 'EARTH — the control. O₂ air, mild sun, stable water. Learn the tools here. (Problems: Meadow, Acid spill, Kiln, Compost, Swarm, Quicklime, Straw guardian, Reef, Web of life, Fish pond, Gilded copies, Flower bed, Shale oil, Honey harvest, Guano island, Clover rotation, Spider guard, Stromatolite reef, Soda flat.)',
+  earth: 'EARTH — the control. O₂ air, mild sun, stable water. Learn the tools here. (Problems: Meadow, Acid spill, Kiln, Compost, Swarm, Quicklime, Straw guardian, Reef, Web of life, Fish pond, Gilded copies, Flower bed, Shale oil, Honey harvest, Guano island, Clover rotation, Spider guard, Stromatolite reef, Soda flat, Old growth, Apiary.)',
   moon: 'MOON — vacuum, +120/−130°C swings (Diviner), fierce UV, shadow ice (LCROSS). Heaters + domes or nothing lives. (Problems: Ice harvest, Night greenhouse, Heavy air, Glass house, Moonwalk.)',
   mars: 'MARS — thin CO₂, equatorial summer site, UV 0.55, perchlorate patches (Phoenix). Brines persist; eaters evolve. (Problems: De-poison, Bloom, Dome bloom, First footprints, Oxygenate, Decontaminate, Banded iron.)',
-  europa: 'EUROPA — ice crust, salty chaos brines, Jupiter radiation. Meltwater is life’s only door. (Problems: Meltwater, Brine garden, Warm pool, White smoker, Brine stock.)',
+  europa: 'EUROPA — ice crust, salty chaos brines, Jupiter radiation. Meltwater is life’s only door. (Problems: Meltwater, Brine garden, Warm pool, White smoker, Brine stock, Krill run.)',
   hadean: 'HADEAN EARTH — lava vents, sulfur skies, no oxygen. Brew acid, garden heat. (Problems: Acid pond, Hot garden, Glass shore, Shade garden, Primordial soup, Genesis, Diamond core, Hot-spring seed.)',
   titan: 'TITAN — orange haze, methane seas (oil stands in for liquid methane), −180° ice bedrock. Fire snuffs; hothouses or nothing lives. (Problems: Oasis, Hothouse, Sun glass, Nuggets.)',
   venus: 'VENUS — 460° basalt plains, sulfur frost, lava fields. Water boils, life is impossible; the planet is a kiln. (Problems: Volcanic glass, Marble works, Diamond forge, Steel works.)',
   io: 'IO — tidal foundry: Jupiter kneads the crust into lava lakes under sulfur frost, −100° days. Resurface or freeze. (Problems: Sulfur snow, Living lake, Tidal pulse, Pele’s ring.)',
   archaean: 'ARCHAEAN — young Earth: warm shallow seas, methane haze, no oxygen, no ozone. Stromatolites reef while the air is still poison-free. (Problems: First mats, The oxidation.)',
+  enceladus: 'ENCELADUS — plumed ice moon: tiger-stripe vents spray a salty ocean through −180° ice. Brine pockets are the only liquid acres. (Problems: Tiger stripes, Brackish sea, Salt spray, Warm pocket.)',
 };
 // progression: research points buy ranks; ranks unlock worlds. Materials stay free forever.
 const QUEST_RP = { E1: 100, E2: 100, M1: 100, M2: 100, R1: 100, R2: 100,
@@ -177,10 +179,12 @@ const QUEST_RP = { E1: 100, E2: 100, M1: 100, M2: 100, R1: 100, R2: 100,
   T1: 150, T2: 150, T3: 150, T4: 150, V1: 150, V2: 150, V3: 250, V4: 150,
   E10: 150, E11: 150, E12: 150, E13: 150, H7: 250,
   E14: 150, E15: 150, E16: 150, E17: 150, E19: 150, E20: 150, U5: 150, H8: 150,
-  R5: 250, R6: 150, R7: 150, M5: 150, I1: 150, I2: 150, A1: 150, A2: 250, I3: 150, I4: 150 };
+  R5: 250, R6: 150, R7: 150, M5: 150, I1: 150, I2: 150, A1: 150, A2: 250, I3: 150, I4: 150,
+  N1: 150, N2: 150, N3: 150, N4: 250,
+  E21: 150, E22: 150, U6: 250 };
 const RANKS = [{ rp: 0, name: 'Undergrad' }, { rp: 400, name: 'Grad student' },
   { rp: 1000, name: 'Principal investigator' }, { rp: 1600, name: 'Mission director' }];
-const UNLOCK_RP = { europa: 400, archaean: 500, titan: 700, io: 900, hadean: 1000, venus: 1200 };
+const UNLOCK_RP = { europa: 400, archaean: 500, titan: 700, io: 900, hadean: 1000, venus: 1200, enceladus: 1400 };
 function getRP() {
   try { return +(localStorage.getItem('sandbox_rp_total') || 0); } catch (e) { return 0; }
 }
@@ -423,6 +427,7 @@ const EXPERIMENTS = [ // rotating yard ideas; w:null means every world
   { w: ['archaean'], t: 'seed cyano in a sunlit pool and watch oxygen climb toward the GOE' },
   { w: ['titan'], t: 'pour water under methane skies and watch it freeze like rock' },
   { w: ['io'], t: 'pour lava wide and count tiles with the census before the crust sets' },
+  { w: ['enceladus'], t: 'salt a pool into brine, then hold it liquid on a vent' },
   { w: ['hadean'], t: 'bank sand against a lava vent and vitrify a glass shore' },
   { w: ['venus'], t: 'press coal under rock in kiln heat and strike diamond' },
   { w: ['mars'], t: 'grow lichen on bare rock in the light — pioneer green' },
@@ -1164,6 +1169,13 @@ const PROG = { // live progress per problem; defensive: counts may not exist yet
   A2: (w) => `${(w.o2 || 0).toFixed(1)}/15 O2`,
   I3: (w) => `${w.erupt || 0}/10 eruptions`,
   I4: (w, c) => `${c.lava || 0}/130 lava`,
+  N1: (w, c) => `${c.vent || 0}/6 vents`,
+  N2: (w, c) => `${c.water || 0}/35 water + vent`,
+  N3: (w, c) => `${c.salt || 0}/50 salt`,
+  N4: (w, c) => `${c.germs || 0}/100 germs + vent`,
+  E21: (w, c) => `${c.tree || 0}/15 trees`,
+  E22: (w, c) => `${c.honey || 0}/10 honey`,
+  U6: (w, c) => `${c.shrimp || 0}/15 shrimp`,
   E9: (w, c) => `H ${(c.ecoH || 0).toFixed(2)}/1.40`,
   H5: (w, c) => `${c.water || 0}/70 water + vent`,
   H6: (w, c) => `${c.germs || 0}/100 germs`,
@@ -1189,7 +1201,7 @@ function refreshQuests() {
   const icon = worldTemp(world).day ? '☀' : '☾';
   $('clock').textContent = `${icon} sol ${world.sol} · ${Math.round(worldTemp(world).T)}°C · reducer ${(world.reducer * 100) | 0}%`;
   $('envblurb').textContent = ENV_BLURB[world.id];
-  $('notes').innerHTML = NOTES[world.id].map(n => `· ${n}`).join('<br>');
+  $('notes').innerHTML = (NOTES[world.id] || ['Field notes pending for this world — the journal still logs every reaction.']).map(n => `· ${n}`).join('<br>');
   try {
     $('rp').textContent = getRP();
     $('rank').textContent = rankFor(getRP()).name;
@@ -1242,6 +1254,18 @@ const NOTES = {
     'The planet is a kiln: metal on coal becomes steel with no fuel spent.',
     'Bank sand and limestone against lava for glass and marble; coal presses to diamond.',
     'Sulfur frost + heat: chemistry happens fast here. Watch the fizz.'],
+  io: ['Tidal heat is free: basalt beside lava cracks open on its own — tend a lake and count the bursts.',
+    'Sulfur frost is the soil here: bank it deep, 140 wins Sulfur snow.',
+    'Lava cools fast in the cold: pour wide and count before the crust sets.',
+    'No air, no water, no mercy — this world is geology, not gardening.'],
+  archaean: ['No oxygen, no ozone: UV bites — domes still shield, water still pools.',
+    'Seed cyano in sunlit shallows and watch the oxygen gauge: the GOE starts here.',
+    'Band iron rusts red past o2 5 — stripes in stone before sky.',
+    'Vents hold 90° in any water: warm pockets predate continents.'],
+  enceladus: ['Everything is ice at −180°: only vents and heaters hold liquid.',
+    'Salt the pool into brine — the real ocean is salty, and fresh water freezes.',
+    'Tiger stripes vent the ocean: paint them in a line across the south ice.',
+    'Import soil, dome it, heat it: the warm pocket is the only garden.'],
 };
 
 /* Just-in-time science: one line per reaction kind, first seen -> field journal.

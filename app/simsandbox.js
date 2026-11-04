@@ -111,6 +111,8 @@ const WORLDS = {
           blurb: 'Young Earth: warm shallow seas, methane haze, no oxygen and no ozone. The GOE happens here first.' },
   venus: { name: 'Venus', g: 0.9, o2: 0, dayT: 460, nightT: 440, cycle: 120,
           uv: 0.3, blurb: 'Runaway greenhouse: 460° basalt plains, sulfur skies, volcanic glass. A kiln with weather.' },
+  enceladus: { name: 'Enceladus', g: 0.11, o2: 0, dayT: -180, nightT: -200, cycle: 90,
+          uv: 0.3, blurb: 'Plumed ice moon: tiger-stripe vents spray a salty ocean through the south ice.' },
 };
 
 function mulberry32(seed) {
@@ -142,7 +144,7 @@ function createWorld(worldId, seed) {
     tech: new Uint8Array(GN), wet: new Float32Array(GN), age: new Float32Array(GN), heat: new Float32Array(GN), hist: [], rot: 0,
     pt: new Float32Array(GN),
     ev: [], quests: {}, m1run: 0, wasNight: true };
-  w.el.fill(worldId === 'europa' || worldId === 'titan' ? E.ICE :
+  w.el.fill(worldId === 'europa' || worldId === 'titan' || worldId === 'enceladus' ? E.ICE :
     (worldId === 'earth' ? E.SOIL : ((worldId === 'venus' || worldId === 'io') ? E.BASALT : E.REGOLITH)));
   for (let k = 0; k < 10; k++)
     blob(rng, w.el, GW, GH, (rng() * GW) | 0, (rng() * GH) | 0, 1 + ((rng() * 3) | 0), E.ROCK);
@@ -199,6 +201,16 @@ function createWorld(worldId, seed) {
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SAND);
     for (let k = 0; k < 2; k++)
       blob(rng, w.el, GW, GH, 14 + ((rng() * (GW - 28)) | 0), 16 + ((rng() * (GH - 24)) | 0), 1, E.VENT);
+  } else if (worldId === 'enceladus') {
+    // tiger stripes: a row of vents across the south ice, brine pockets, salty spray
+    for (let k = 0; k < 4; k++)
+      blob(rng, w.el, GW, GH, 12 + k * 14, 32, 1, E.VENT);
+    for (let k = 0; k < 3; k++) // ocean leaking upward: brine lenes under the stripes
+      blob(rng, w.el, GW, GH, 10 + ((rng() * (GW - 20)) | 0), 26 + ((rng() * 8) | 0), 2, E.BRINE);
+    for (let k = 0; k < 4; k++) // plume fallout: salt + snow dusting the ice
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 2, E.SALT);
+    for (let k = 0; k < 3; k++)
+      blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 2, E.SNOW);
   } else {
     for (let k = 0; k < 5; k++)
       blob(rng, w.el, GW, GH, 6 + ((rng() * (GW - 12)) | 0), 6 + ((rng() * (GH - 12)) | 0), 3, E.SALT);
@@ -2033,8 +2045,22 @@ const QUESTS = [
     done: (w) => w.erupt >= 10, guide: 'Jupiter kneads the crust: basalt near lava cracks open on its own. Tend a lake and count the bursts.' },
   { id: 'I4', world: 'io', name: "Pele's ring", goal: 'hold 130 lava',
     done: (w, c) => c.lava >= 130, guide: 'Pour fresh lava and let the tides help: eruptions feed the lakes while crust steals the edges.' },
+  { id: 'N1', world: 'enceladus', name: 'Tiger stripes', goal: 'hold 6 vents',
+    done: (w, c) => c.vent >= 6, guide: 'Paint a stripe line of VENTs across the south ice — Cassini mapped four real ones: Alexandria, Cairo, Baghdad, Damascus.' },
+  { id: 'N2', world: 'enceladus', name: 'Brackish sea', goal: 'hold 35 water around a vent',
+    done: (w, c) => c.water >= 35 && c.vent > 0, guide: 'Salt the pool into brine so it survives the cold, then vent + two heaters hold it liquid. Fresh water freezes; the ocean is salty for a reason.' },
+  { id: 'N3', world: 'enceladus', name: 'Salt spray', goal: 'hold 50 salt',
+    done: (w, c) => c.salt >= 50, guide: 'The plumes spray salty grains — Cassini tasted them. Bank the fallout: paint salt wide on the ice.' },
+  { id: 'N4', world: 'enceladus', name: 'Warm pocket', goal: 'grow 100 germs beside a vent',
+    done: (w, c) => c.germs >= 100 && c.vent > 0, guide: 'Import soil, dome it, heat it, then plant beside a vent — the only warm, wet, sheltered acres on the moon.' },
   { id: 'H7', world: 'hadean', name: 'Diamond core', goal: 'press 3 diamonds at a vent',
     done: (w, c) => c.diamond >= 3, guide: 'Coal against a lava vent: Hadean heat does the pressing. Mind the quench steam.' },
+  { id: 'E21', world: 'earth', name: 'Old growth', goal: 'raise 15 trees',
+    done: (w, c) => c.tree >= 15, guide: 'Plant trees on damp soil and let them seed: old trees drop saplings at their roots. Forests are slow meadows.' },
+  { id: 'E22', world: 'earth', name: 'Apiary', goal: 'put up 10 honey',
+    done: (w, c) => c.honey >= 10, guide: 'Bigger beds, steady bees: flowers by day, hives fed and storing. Angiosperms pay in sugar — collect it.' },
+  { id: 'U6', world: 'europa', name: 'Krill run', goal: 'graze 15 brine shrimp',
+    done: (w, c) => c.shrimp >= 15, guide: 'Scale the stock: wide brine, dawn algae, double shrimp. Artemia grazes what fish cannot reach.' },
 ];
 
 function checkQuests(w, day) {

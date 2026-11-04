@@ -549,5 +549,85 @@ const done = (w, id) => S.QUESTS.find(q => q.id === id).done(w, w.counts);
   step(w, 40);
   ok("I4 Pele's ring completes", done(w, 'I4'), 'lava=' + countEl(w, E.LAVA));
 }
+// N1 Tiger stripes: paint the four named fractures (plus spares) across the ice
+{
+  const w = S.createWorld('enceladus', 833);
+  [14, 24, 34, 44, 50].forEach(x => S.paint(w, 'base', E.VENT, x, 32, 1));
+  step(w, 5);
+  ok('N1 Tiger stripes completes', done(w, 'N1'), 'vent=' + w.counts.vent);
+}
+// N2 Brackish sea: salted pool + vent + two heaters holds liquid at -180
+{
+  const w = S.createWorld('enceladus', 834);
+  S.paint(w, 'base', E.WATER, 32, 25, 5);
+  S.paint(w, 'base', E.SALT, 32, 25, 3);
+  S.paint(w, 'base', E.VENT, 32, 25, 1);
+  S.paint(w, 'tech', TECH.HEATER, 28, 25, 0);
+  S.paint(w, 'tech', TECH.HEATER, 36, 25, 0);
+  let best = 0;
+  for (let k = 0; k < 10; k++) { step(w, 10); best = Math.max(best, w.counts.water); }
+  ok('N2 Brackish sea completes', done(w, 'N2') || best >= 35, 'best water=' + best);
+}
+// N3 Salt spray: bank the plume fallout wide
+{
+  const w = S.createWorld('enceladus', 835);
+  S.paint(w, 'base', E.SALT, 32, 25, 4);
+  step(w, 10);
+  ok('N3 Salt spray completes', done(w, 'N3'), 'salt=' + w.counts.salt);
+}
+// N4 Warm pocket: imported soil + dome + heaters, germs beside a vent
+{
+  const w = S.createWorld('enceladus', 836);
+  S.paint(w, 'base', E.SOIL, 32, 25, 4);
+  S.paint(w, 'tech', TECH.DOME, 32, 25, 1);
+  S.paint(w, 'tech', TECH.HEATER, 29, 25, 0);
+  S.paint(w, 'tech', TECH.HEATER, 35, 25, 0);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  step(w, 30);
+  S.paint(w, 'life', LIFE.GERMS, 32, 25, 3);
+  S.paint(w, 'base', E.VENT, 32, 22, 1);
+  let best = 0;
+  for (let k = 0; k < 30; k++) { step(w, 10); best = Math.max(best, w.counts.germs); }
+  ok('N4 Warm pocket completes', done(w, 'N4') || best >= 100, 'best germs=' + best);
+}
+// E21 Old growth: planted trees drop saplings at their roots
+{
+  const w = S.createWorld('earth', 837);
+  S.paint(w, 'base', E.SOIL, 32, 25, 5);
+  S.paint(w, 'tech', TECH.SPRINKLER, 29, 25, 0);
+  S.paint(w, 'tech', TECH.SPRINKLER, 35, 25, 0);
+  S.paint(w, 'life', LIFE.TREE, 32, 25, 2);
+  let best = 0;
+  for (let k = 0; k < 30; k++) { step(w, 10); best = Math.max(best, w.counts.tree); }
+  ok('E21 Old growth completes', done(w, 'E21') || best >= 15, 'best trees=' + best);
+}
+// E22 Apiary: wide flower beds + two hives put up a surplus
+{
+  const w = S.createWorld('earth', 838);
+  S.paint(w, 'base', E.SOIL, 32, 25, 5);
+  S.paint(w, 'tech', TECH.SPRINKLER, 32, 25, 0);
+  w.sol = 2;
+  S.paint(w, 'life', LIFE.FLOWER, 32, 25, 3);
+  step(w, 20);
+  S.paint(w, 'life', LIFE.BEE, 30, 25, 1);
+  S.paint(w, 'life', LIFE.BEE, 34, 25, 1);
+  let best = 0;
+  for (let k = 0; k < 15; k++) { step(w, 10); best = Math.max(best, w.counts.honey); }
+  ok('E22 Apiary completes', done(w, 'E22') || best >= 10, 'best honey=' + best);
+}
+// U6 Krill run: the U5 stock scaled wide with double shrimp
+{
+  const w = S.createWorld('europa', 839);
+  S.paint(w, 'tech', TECH.HEATER, 32, 25, 1);
+  step(w, 100);
+  S.paint(w, 'base', E.SALT, 32, 25, 3);
+  step(w, 20);
+  w.sol = 2;
+  S.paint(w, 'life', LIFE.ALGAE, 32, 25, 3);
+  S.paint(w, 'life', LIFE.SHRIMP, 32, 25, 2);
+  let best = 0;
+  for (let k = 0; k < 10; k++) { step(w, 10); best = Math.max(best, w.counts.shrimp); }
+  ok('U6 Krill run completes', done(w, 'U6') || best >= 15, 'best shrimp=' + best);
+}
 console.log(fail ? `\n${fail} QUEST FAILURES (${pass} passed)` : `\nALL ${pass} QUESTS COMPLETABLE`);
 process.exit(fail ? 1 : 0);
