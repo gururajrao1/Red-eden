@@ -242,4 +242,131 @@ const CHAPTERS = {
     'https://en.wikipedia.org/wiki/Faint_young_Sun_paradox'],
   dramatized: 'The “invoice” and “delivery trucks” framings are imagined. The magma ocean and Moon-forming impact, Jack Hills zircon ages and water fingerprints, the 30-percent-dimmer Sun, the contested bombardment chronology, and the greenhouse-gas resolution are from the cited sources.'
 },
+'poison-soil': {
+  title: 'The Poison That Became Lunch',
+  sub: 'Perchlorate in Mars dirt: the Phoenix shock, the evidence it burns, and the microbes learning to eat it.',
+  minutes: 11,
+  paper: 'Hecht et al., 2009, Science — ~1 wt% perchlorate at the Phoenix site',
+  also: 'E. coli perchlorate-stress transcriptomics, 2024; Atacama Bacillus perchlorate respiration',
+  level: 'established',
+  pages: [
+    { h: 'Salt in the scoop',
+      kick: 'May 2008: Phoenix tastes the soil.',
+      paras: [
+      'The Phoenix lander did something no Mars mission had done: wet chemistry. Its MECA instrument spooned Martian soil into tiny beakers of Earth water and read the solution like a lab tech. The stickiest result was not the pH or the magnesium. It was perchlorate — ClO4, the same oxidiser that powers solid rocket boosters — at roughly one percent of the soil by weight.',
+      'One percent sounds small until you farm with it. Perchlorate blocks thyroid iodine uptake in humans, and it attacks plant growth at parts per million. Every plan for growing food on Mars — every greenhouse render with smiling lettuce — had quietly assumed dirt that behaves like dirt. The scoop said otherwise: Mars farmland comes pre-salted with rocket fuel.'] },
+    { h: 'The double cross',
+      kick: 'Perchlorate burns the evidence too.',
+      paras: [
+      'The insult has a second layer, and it rewrote mission history. To sniff organics, rovers heat soil samples — and heated perchlorate combusts organics on contact, then chlorinates the fragments. The SAM team showed this is exactly what confused Viking in 1976: the landers baked their samples, the perchlorate torched whatever carbon was there, and the instruments reported chlorohydrocarbons that looked like contamination.',
+      'So the poison does double duty: it threatens any life trying to live in the dirt, and it hides the traces of any life that did. Every organics measurement on Mars since has had to tiptoe around it — lower heat, slower ramps, chemistry that outsmarts the salt. The filter is honest: on Mars, the soil fights the search party.'] },
+    { h: 'The gut microbe fights back',
+      kick: 'E. coli under perchlorate siege.',
+      paras: [
+      'In 2024 a transcriptomics team put ordinary E. coli under sodium perchlorate stress and read every gene it switched on. The bacterium was fighting on three fronts at once: osmotic shock as water fled its cells, chaotropic disorder as proteins wobbled, and oxidative damage gnawing at its DNA. Its answer was heavily tilted toward one casualty — nucleic acids — and one repair shop: DNA repair pathways cranked to full volume.',
+      'That pattern is the whole Red Eden lab genome in miniature. Our microbes carry UV-repair and membrane loci for the same reason E. coli upregulated repair: under perchlorate, the genome itself is the battlefield. The lab lets you replay the siege — poison high, repair loci evolving — and watch populations either fix the repair alleles or die informed.'] },
+    { h: 'Learning to breathe poison',
+      kick: 'Atacama Bacillus inhales it.',
+      paras: [
+      'The bolder trick comes from Mars-analog deserts. Bacillus strains isolated from the Atacama do not merely tolerate perchlorate — they breathe it, growing anaerobically with perchlorate as the electron acceptor where oxygen would normally go. Evolution did not build a wall against the poison. It built a lung out of it.',
+      'That is the direct blueprint for the reducer niche in the sim: germs that detox brine and evolve as they digest, the reducer percentage climbing with every meal. And in 2025, applied teams pushed it further — evolving a hardy microbe until it could source nutrients from Mars-like material itself. Directed evolution for settlement: the lab preset “poison world” is that experiment, compressed, with you holding the mutation dial.'] },
+    { h: 'Your turn',
+      kick: 'Replay detox in the sandbox.',
+      paras: [
+      'The Mars world is this chapter, playable. Paint SALT across the regolith, then run WATER through it: salt plus water reads as brine, liquid far below zero, and that is where germs go to work. The journal fires its Brine-eaters note the first time they convert a patch back to fresh water — dinner and detox in one bite.',
+      'Then the long game. The R1 problem wants zero salt and eight hundred living germs: dissolve the poison, seed big, and watch the reducer stat climb as the eaters evolve. Concrete walls and domes keep the weather out; nothing keeps the chemistry out except appetite. Salt in, lunch out — run the Phoenix scoop in reverse.'] },
+  ],
+  experiment: { title: 'Replay it: de-poison a yard',
+    steps: ['Open the Mars world and paint SALT drifts across the regolith.',
+    'Run WATER through the drifts until the readout says brine, then seed GERMS in it.',
+    'Watch the reducer % climb as eaters convert brine back to fresh water.',
+    'Push for R1: zero salt left, 800 germs alive — the Phoenix scoop in reverse.'] },
+  sources: [
+    'https://evrimagaci.org/tpg/microbial-survival-strategies-of-e-coli-uncovered-for-martian-conditions-240808',
+    'https://www.space.com/astronomy/mars/scientists-engineer-microbe-to-help-humanity-settle-mars'],
+  dramatized: 'The “lab tech” and “lunch” framings are imagined. The ~1 wt% Phoenix measurement, the SAM-team perchlorate combustion finding, the three-front E. coli stress response with DNA-repair upregulation, perchlorate respiration in Bacillus isolates, and the 2025 directed-evolution result are from the cited papers.'
+},
+'sun-fungus': {
+  title: 'Sunscreen Made of Ink',
+  sub: 'A black fungus vs Mars-grade UV and perchlorate — why combined stressors are the real filter.',
+  minutes: 9,
+  paper: 'Rhinocladiella similis combined-stress study, 2025 — UV-C plus magnesium perchlorate',
+  also: 'Zaccaria, 2026, Radboud thesis — Earth pathogens vs individual Mars hazards',
+  level: 'established',
+  pages: [
+    { h: 'Ink as armor',
+      kick: 'Melanin: the original radiation suit.',
+      paras: [
+      'Some fungi wear ink. Melanised species pack their cell walls with melanin — the same pigment family that darkens human skin — and the coating drinks radiation across the spectrum while shrugging off desiccation and oxidants. On Earth these are the fungi found inside Chernobyl ruins and Antarctic rock cracks: wherever the environment files complaints, the black fungi file back.',
+      'Rhinocladiella similis is one of the tough ones, and a 2025 team gave it the Mars treatment at full strength: UV-C at sterilising doses plus magnesium perchlorate at Mars-like concentrations, at the same time. Single stressors are laboratory politeness. Mars serves them together, and the team wanted to know whether ink holds when the whole menu arrives.'] },
+    { h: 'Combined, not single',
+      kick: 'The filter is the combination.',
+      paras: [
+      'It holds — diminished, but alive. The fungus resisted the combined UV-plus-perchlorate regime that would shred unshielded cells, with melanin and repair pathways sharing the load. The headline is methodological as much as biological: microbes that survive each Mars hazard individually can still fail them stacked, and microbes that look fragile alone can pass together.',
+      'That is why the sandbox kills unshielded germs with combined days — UV by noon, cold by night, brine underfoot — and why the journal logs a Perished note instead of naming one cause. Testing hazards one at a time is how you pass a microbe that Mars would fail. The real filter is the stack.'] },
+    { h: 'The contamination question',
+      kick: 'What survives the trip over.',
+      paras: [
+      'Turn the lens around and the same data becomes a worry. Zaccaria’s 2026 thesis ran known Earth pathogens through individual Mars hazards — low pressure, desiccation, UV, perchlorate brines — and found survivors in every lane. Not thriving, not colonising: enduring. A spore that rides a lander through sterilisation gaps and waits out the stack is planetary-protection’s nightmare commuter.',
+      'So the two papers bracket the game. One asks what could already live there; the other asks what we might accidentally deliver. Both agree on the method: respect the combination, sterilise for the stack, and never trust a single-stressor pass. Your domes are the playable version of that caution — shelter as policy, not decoration.'] },
+    { h: 'Your turn',
+      kick: 'Replay shelter in the sandbox.',
+      paras: [
+      'The Mars world is this chapter, playable. Paint germs on open regolith at dawn and read the ticker by noon: UV shreds them, the Perished note fires, and the inspector tells you exactly which need failed. Then build the answer — a DOME for air and UV cover, heaters for the night swing — and plant again inside.',
+      'Push further with lichen, the pioneer that colonises bare rock in the light: the R4 problem wants seventy of them on open stone. Ink-armor strategy, playable. And remember the thesis when you succeed — everything you sheltered in that dome is exactly what a lander must keep out of the dirt.'] },
+  ],
+  experiment: { title: 'Replay it: the stack vs the dome',
+    steps: ['Open the Mars world and paint GERMS on open regolith at dawn.',
+    'Read the Perished note at noon — UV plus cold plus brine, the stack.',
+    'Build a DOME with heaters, replant inside, and hold them through a sol.',
+    'Grow 70 LICHEN on bare rock for R4 — the pioneer strategy.'] },
+  sources: [
+    'https://pmc.ncbi.nlm.nih.gov/articles/PMC12095635/',
+    'https://phys.org/news/2026-06-earth-microbes-survive-individual-martian.pdf'],
+  dramatized: 'The “ink” and “nightmare commuter” framings are imagined. The Rhinocladiella UV-C plus magnesium-perchlorate survival, the combined-stressors conclusion, and the Zaccaria individual-hazard pathogen survival results are from the cited papers.'
+},
+'great-oxidation': {
+  title: 'The Breath That Poisoned the World',
+  sub: 'Cyanobacteria exhaled oxygen for a billion years — then the sinks filled, and everything changed.',
+  minutes: 12,
+  paper: 'Lyons, Reinhard & Planavsky, 2014, Nature — the rise of O2 in oceans and atmosphere',
+  also: 'Stromatolite fossil record ~3.5 Ga (e.g. Dresser Formation); banded-iron formations as oxygen sinks',
+  level: 'established',
+  pages: [
+    { h: 'Mats that learned to exhale',
+      kick: 'Shallow water, 3 billion years ago.',
+      paras: [
+      'The oldest oxygen factories were mats. Cyanobacteria spread across sunlit shallows in layered sheets, each generation growing over the last, trapping sediment grain by grain. Fossilised, those mats are stromatolites — domed rocks going back some 3.5 billion years, with living analogues still growing in Shark Bay, Australia, where hypersaline water keeps grazers out.',
+      'Their trick was photosynthesis that splits water and exhales oxygen as waste. Waste is the key word. For roughly a billion years the mats pumped out O2 and the planet barely noticed, because something was drinking it as fast as it flowed. The Archaean world replays this opening exactly: seed cyano in a sunlit pool and watch the oxygen gauge barely twitch while the sinks are thirsty.'] },
+    { h: 'Sinks before sky',
+      kick: 'The ocean drank a billion years of breath.',
+      paras: [
+      'Two sinks swallowed the exhale. Dissolved iron in the oceans grabbed oxygen and rained out as banded-iron formations — kilometres of striped red-and-grey rock, the greatest iron mines on Earth, all of them receipts for oxygen paid into the sea. Volcanic gases took a second tithe. While the sinks held, the sky stayed anoxic and the mats kept breathing into a drain.',
+      'The sandbox models the drain honestly: banded-iron tiles only rust where oxygen reads five or more, so early pools stay grey no matter how much cyano you seed. Players who paint iron early learn the geologist’s lesson — the first billion years of oxygen left no sky behind, only stripes in stone.'] },
+    { h: 'The great rusting',
+      kick: '~2.4 billion years ago, the sinks filled.',
+      paras: [
+      'Then, around 2.4 billion years ago, the receipts stop balancing. The Lyons review assembles the ledger: banded irons fade, red beds appear on land, sulfur isotopes flip their signal — three independent witnesses agreeing the sinks filled and oxygen began pooling in air and shallow sea. The Great Oxidation Event is not one measurement. It is a planetary audit with three signatures.',
+      'For most life alive then, the audit was a catastrophe. Oxygen is a corrosive waste gas to anaerobes — the GOE was mass poisoning by photosynthesis, dealt by the victims’ own children. Whole metabolisms retreated to mud, guts, and vents, where they still hide today. Your gut flora are refugees of a sky that turned toxic.'] },
+    { h: 'The shield and the sequel',
+      kick: 'Oxygen’s waste made land livable.',
+      paras: [
+      'The poison paid compound interest. Oxygen high in the air split under sunlight into ozone, and the ozone layer drank the ultraviolet that had sterilised every surface for two billion years. Land — bombarded, unreachable, Mars-like in its exposure — became survivable from above for the first time. The waste gas built a roof.',
+      'Only then could the story leave the water: spores, plants, soils, everything green that the sandbox grows on dirt. Every meadow you paint on Earth is a sequel to the mats. The Archaean pool and the Earth lawn are the same lineage with an oxygenated sky between them — which is why the game makes you earn the sky before it lets you keep the grass.'] },
+    { h: 'Your turn',
+      kick: 'Replay the GOE in the sandbox.',
+      paras: [
+      'The Archaean world is this chapter, playable. The A2 problem is the whole audit in one pool: seed CYANO in sunlit water and hold it alive while the oxygen gauge climbs past fifteen. No heaters, no shortcuts — the mats do the chemistry the way the mats did it, exhaling past sinks until the sky budget turns.',
+      'Watch the shallows as you pass five: banded-iron tiles rust red at the rims, the BIF milestone fires, and the pool you started looks suddenly modern. Then flip to Earth and plant grass on dirt under a blue sky you now know is borrowed exhaust. Fifteen oxygen, two billion years, one puddle — run the numbers yourself.'] },
+  ],
+  experiment: { title: 'Replay it: the Oxidation in one pool',
+    steps: ['Open the Archaean world and paint a broad WATER pool in the shallows.',
+    'Seed CYANO across the sunlit water and keep the mats alive through sols.',
+    'Watch w.o2 climb — note banded-iron tiles rusting red past o2 5.',
+    'Push past o2 15 for A2: the GOE milestone fires — then plant grass on Earth.'] },
+  sources: [
+    'https://www.nature.com/articles/nature13068',
+    'https://en.wikipedia.org/wiki/Great_Oxidation_Event'],
+  dramatized: 'The “receipts,” “audit,” and “refugees” framings are imagined. Stromatolite ages (~3.5 Ga) and Shark Bay analogues, banded-iron formations as oxygen sinks, the ~2.4 Ga timing with its three independent signatures, and the ozone-shield sequel are from the cited review and record.'
+},
 };
